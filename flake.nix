@@ -16,7 +16,7 @@
     home-manager,
     ...
   } @ inputs: {
-    nixosConfigurations.nixos-desktop = let
+    nixosConfigurations.homelab = let
       system = "x86_64-linux";
       specialArgs = {
         inherit inputs;
