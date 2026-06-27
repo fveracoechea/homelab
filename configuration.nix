@@ -1,6 +1,6 @@
 {inputs, ...}: {
   imports = [
-    ./hardware-configuration
+    ./hardware-configuration.nix
     inputs.dotfiles.nixosModules.default
   ];
 }
