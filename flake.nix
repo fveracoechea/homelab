@@ -14,12 +14,14 @@
   outputs = {
     nixpkgs,
     home-manager,
+    dotfiles,
     ...
   } @ inputs: {
     nixosConfigurations.homelab = let
       system = "x86_64-linux";
       specialArgs = {
         inherit inputs;
+        dotfilesPkgs = dotfiles.dotfilesPkgs.${system};
       };
     in
       nixpkgs.lib.nixosSystem {

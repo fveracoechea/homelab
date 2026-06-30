@@ -12,10 +12,16 @@
   home.username = "fveracoechea";
   home.homeDirectory = "/home/fveracoechea";
 
-  users.users.fveracoechea = {
-    isNormalUser = true;
-    description = "fveracoechea";
-    extraGroups = ["networkmanager" "wheel" "audio" "docker" "dialout" "plugdev"];
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+    settings = {
+      "github.com" = {
+        IdentityFile = "~/.ssh/github_id";
+        IdentitiesOnly = "yes";
+        User = "git";
+      };
+    };
   };
 
   # DO NOT CHANGE
