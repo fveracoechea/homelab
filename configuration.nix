@@ -31,8 +31,6 @@
     networkmanager.enable = true;
   };
 
-  programs.ssh.startAgent = true;
-
   services.openssh = {
     enable = true;
     openFirewall = true;
@@ -44,6 +42,18 @@
   };
 
   time.timeZone = "America/New_York";
+
+  programs.ssh = {
+    enable = true;
+    startAgent = true;
+    settings = {
+      "github.com" = {
+        IdentityFile = "~/.ssh/github_id";
+        IdentitiesOnly = "yes";
+        User = "git";
+      };
+    };
+  };
 
   i18n = let
     locale = "en_US.UTF-8";
