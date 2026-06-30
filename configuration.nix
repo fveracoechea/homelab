@@ -18,6 +18,8 @@
     settings.trusted-users = ["root" "@wheel"];
   };
 
+  security.sudo.wheelNeedsPassword = false;
+
   dotfiles = {
     docker.enable = true;
     system-shell.enable = true;
