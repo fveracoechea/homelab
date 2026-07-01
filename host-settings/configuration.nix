@@ -2,6 +2,9 @@
   imports = [
     ./hardware-configuration.nix
     inputs.dotfiles.nixosModules.default
+
+    ../services/paperless.nix
+    ../services/immich.nix
   ];
 
   boot.loader.systemd-boot.enable = true;

@@ -7,3 +7,17 @@ This is a NixOS homelab config flake
 - Comments: Minimal inline comments, prefer self-documenting code
 - Test config: `nixos-rebuild test --flake .#homelab` 
 - Check flake: `nix flake check`
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues (uses `gh` CLI); external PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

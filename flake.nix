@@ -28,7 +28,7 @@
         inherit specialArgs;
 
         modules = [
-          ./configuration.nix
+          ./host-settings/configuration.nix
           home-manager.nixosModules.home-manager
           {
             nixpkgs.hostPlatform = system;
@@ -36,7 +36,7 @@
             home-manager.useUserPackages = true;
             nixpkgs.config.allowUnfree = true;
             home-manager.backupFileExtension = "hm-backup";
-            home-manager.users.fveracoechea = import ./home.nix;
+            home-manager.users.fveracoechea = import ./host-settings/home.nix;
             home-manager.extraSpecialArgs = specialArgs;
           }
         ];
