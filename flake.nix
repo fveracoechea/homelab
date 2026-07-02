@@ -29,6 +29,10 @@
 
         modules = [
           ./host-settings/configuration.nix
+          ./services/caddy.nix
+          ./services/paperless.nix
+          ./services/immich.nix
+          ./services/vaultwarden.nix
           home-manager.nixosModules.home-manager
           {
             nixpkgs.hostPlatform = system;
