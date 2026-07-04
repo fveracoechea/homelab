@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  domain = "gateway.veracoechea.com";
+  domain = "network.veracoechea.com";
   headscaleDomain = "vpn.veracoechea.com";
 
   format = pkgs.formats.yaml {};
@@ -34,6 +34,13 @@ in {
   };
 
   services.caddy.virtualHosts."${domain}".extraConfig = ''
-    reverse_proxy 127.0.0.1:3000
+    tls /var/lib/acme/vpn.veracoechea.com/fullchain.pem /var/lib/acme/vpn.veracoechea.com/key.pem
+    @tailnet remote_ip 100.64.0.0/10
+    handle @tailnet {
+      reverse_proxy 127.0.0.1:3000
+    }
+    handle {
+      respond 403
+    }
   '';
 }

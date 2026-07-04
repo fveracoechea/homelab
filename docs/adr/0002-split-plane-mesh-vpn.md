@@ -12,6 +12,6 @@ The homelab is behind Xfinity residential NAT — no public IP, no inbound conne
 ## Consequences
 
 - The VPS must always be up for new nodes to join the tailnet (existing nodes keep working if the control plane is briefly down, but new joins and key rotations need it).
-- DNS: `vpn.veracoechea.com` and `gateway.veracoechea.com` point at the VPS public IP; `*.veracoechea.com` (wildcard) points at the homelab's tailnet IP `100.64.0.1` via Cloudflare. The wildcard catches all homelab services; explicit records override it for VPS-hosted endpoints.
+- DNS: `vpn.veracoechea.com` and `network.veracoechea.com` point at the VPS public IP; `*.veracoechea.com` (wildcard) points at the homelab's tailnet IP `100.64.0.1` via Cloudflare. The wildcard catches all homelab services; explicit records override it for VPS-hosted endpoints.
 - The homelab's Tailscale config uses `extraUpFlags` for `--login-server` (passed to `tailscale up`) and `extraSetFlags` for `--advertise-routes` (passed to `tailscale set`). These are not interchangeable — `--login-server` is not a valid `tailscale set` flag.
 - If a node was previously joined to a different login server (e.g., Tailscale SaaS), a one-time `sudo tailscale up --reset --login-server=https://vpn.veracoechea.com ...` is needed to reconcile state.

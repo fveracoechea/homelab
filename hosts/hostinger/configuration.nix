@@ -10,8 +10,11 @@
     ./hardware-configuration.nix
     ./networking.nix
 
+    ../../services/caddy-vps.nix
     ../../services/headscale.nix
     ../../services/headplane.nix
+    ../../services/tailscale-vps.nix
+    ../../services/fail2ban.nix
   ];
 
   boot.loader.grub = {

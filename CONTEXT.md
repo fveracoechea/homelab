@@ -19,7 +19,7 @@ User-level config on homelab is delegated to `home-manager`; both system and use
 - **dotfilesPkgs** — the package overlay exposed by the `dotfiles` flake, passed into hosts via `specialArgs`.
 - **System version** — pinned by `system.stateVersion` / `home.stateVersion`; do not change.
 - **Headscale** — the self-hosted Tailscale coordination server running on the hostinger VPS (`services/headscale.nix`). NixOS-native, SQLite, embedded DERP relay. Domain: `vpn.veracoechea.com`.
-- **Headplane** — the web UI for Headscale running on the hostinger VPS (`services/headplane.nix`). NixOS-native (built-in nixpkgs module). API key auth (no OIDC). Domain: `gateway.veracoechea.com`.
+- **Headplane** — the web UI for Headscale running on the hostinger VPS (`services/headplane.nix`). NixOS-native (built-in nixpkgs module). API key auth (no OIDC). Domain: `network.veracoechea.com`.
 - **Tailscale client** — the mesh VPN client running on the homelab (`services/tailscale.nix`). Joins the tailnet managed by Headscale, advertises the `10.0.0.0/24` LAN subnet as a network route. Uses official Tailscale clients on all devices.
 - **Mesh interface** — the WireGuard interface created by the Tailscale client on the homelab. Named `tailscale0`. Caddy serves subdomain virtualHosts on this interface; firewall opens 443 only on `tailscale0` and `enp8s0`.
 - **DERP relay** — Tailscale's fallback relay for NAT traversal when direct peer-to-peer fails. Embedded in Headscale on the VPS (STUN on `3478/udp`). Uses Tailscale's public DERP network as additional fallback (disabled — self-contained).
@@ -46,7 +46,7 @@ User-level config on homelab is delegated to `home-manager`; both system and use
     ├── immich.nix                 ← photo/video management (photos.veracoechea.com, 10.0.0.2:2283)
     ├── vaultwarden.nix            ← password manager (passwords.veracoechea.com, LAN-only HTTPS, PostgreSQL via configurePostgres)
     ├── headscale.nix              ← Tailscale control plane on VPS (vpn.veracoechea.com, NixOS-native + SQLite + embedded DERP)
-    ├── headplane.nix              ← Headscale web UI on VPS (gateway.veracoechea.com, NixOS-native, API key auth)
+    ├── headplane.nix              ← Headscale web UI on VPS (network.veracoechea.com, NixOS-native, API key auth)
     └── tailscale.nix              ← Tailscale client on homelab (joins tailnet via Headscale, advertises 10.0.0.0/24)
 ```
 

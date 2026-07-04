@@ -44,14 +44,12 @@ in {
     };
   };
 
-  services.caddy = {
-    enable = true;
-    virtualHosts."${domain}".extraConfig = ''
-      reverse_proxy 127.0.0.1:${toString 8081} {
-        header_up X-Forwarded-For {remote_host}
-      }
-    '';
-  };
+  services.caddy.virtualHosts."${domain}".extraConfig = ''
+    tls /var/lib/acme/vpn.veracoechea.com/fullchain.pem /var/lib/acme/vpn.veracoechea.com/key.pem
+    reverse_proxy 127.0.0.1:${toString 8081} {
+      header_up X-Forwarded-For {remote_host}
+    }
+  '';
 
   networking.firewall.allowedUDPPorts = [3478];
 }
