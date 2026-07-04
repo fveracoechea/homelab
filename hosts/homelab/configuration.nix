@@ -3,14 +3,15 @@
     ./hardware-configuration.nix
     inputs.dotfiles.nixosModules.default
 
-    ../services/paperless.nix
-    ../services/immich.nix
+    ../../services/caddy.nix
+    ../../services/paperless.nix
+    ../../services/immich.nix
+    ../../services/vaultwarden.nix
+    ../../services/tailscale.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
-  nixpkgs.system.allowUnfree = true;
 
   nix = {
     gc.automatic = true;

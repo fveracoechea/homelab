@@ -14,5 +14,10 @@
     };
   };
 
+  services.caddy.virtualHosts."docs.veracoechea.com".extraConfig = ''
+    tls internal
+    reverse_proxy 127.0.0.1:28981
+  '';
+
   # networking.firewall.interfaces.enp8s0.allowedTCPPorts = [28981];
 }

@@ -9,41 +9,51 @@
 
     dotfiles.url = "github:fveracoechea/dotfiles";
     dotfiles.inputs.nixpkgs.follows = "nixpkgs";
+
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
     nixpkgs,
     home-manager,
     dotfiles,
+    disko,
     ...
-  } @ inputs: {
-    nixosConfigurations.homelab = let
-      system = "x86_64-linux";
-      specialArgs = {
-        inherit inputs;
-        dotfilesPkgs = dotfiles.dotfilesPkgs.${system};
-      };
-    in
-      nixpkgs.lib.nixosSystem {
-        inherit specialArgs;
+  } @ inputs: let
+    system = "x86_64-linux";
+    specialArgs = {
+      inherit inputs;
+      dotfilesPkgs = dotfiles.dotfilesPkgs.${system};
+    };
+  in {
+    nixosConfigurations.homelab = nixpkgs.lib.nixosSystem {
+      inherit specialArgs;
+      modules = [
+        ./hosts/homelab/configuration.nix
+        home-manager.nixosModules.home-manager
+        {
+          nixpkgs.hostPlatform = system;
+          nixpkgs.config.allowUnfree = true;
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.backupFileExtension = "hm-backup";
+          home-manager.users.fveracoechea = import ./hosts/homelab/home.nix;
+          home-manager.extraSpecialArgs = specialArgs;
+        }
+      ];
+    };
 
-        modules = [
-          ./host-settings/configuration.nix
-          ./services/caddy.nix
-          ./services/paperless.nix
-          ./services/immich.nix
-          ./services/vaultwarden.nix
-          home-manager.nixosModules.home-manager
-          {
-            nixpkgs.hostPlatform = system;
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            nixpkgs.config.allowUnfree = true;
-            home-manager.backupFileExtension = "hm-backup";
-            home-manager.users.fveracoechea = import ./host-settings/home.nix;
-            home-manager.extraSpecialArgs = specialArgs;
-          }
-        ];
-      };
+    nixosConfigurations.hostinger = nixpkgs.lib.nixosSystem {
+      inherit specialArgs;
+      modules = [
+        disko.nixosModules.disko
+        ./hosts/hostinger/configuration.nix
+        {
+          nixpkgs.hostPlatform = system;
+          nixpkgs.config.allowUnfree = true;
+        }
+      ];
+    };
   };
 }

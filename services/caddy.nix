@@ -9,4 +9,5 @@
   };
 
   networking.firewall.interfaces.enp8s0.allowedTCPPorts = [443];
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [443];
 }
