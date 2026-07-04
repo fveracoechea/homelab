@@ -22,12 +22,12 @@ in {
       server = {
         host = "127.0.0.1";
         port = 3000;
+        base_url = "https://${domain}";
         cookie_secret_path = "/var/lib/headplane/cookie-secret";
       };
       headscale = {
         url = "https://${headscaleDomain}";
         config_path = "${headscaleConfig}";
-        api_key_path = "/var/lib/headplane/api-key";
       };
       integration.proc.enabled = true;
     };

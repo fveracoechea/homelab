@@ -1,11 +1,12 @@
 {...}: {
   services.paperless = {
     enable = true;
-    address = "10.0.0.2";
-    passwordFile = null;
+    address = "127.0.0.1";
+    passwordFile = "/var/lib/paperless/admin-password";
     database.createLocally = true;
     settings = {
-      PAPERLESS_URL = "http://10.0.0.2:28981";
+      PAPERLESS_ADMIN_USER = "fveracoechea";
+      PAPERLESS_URL = "https://docs.veracoechea.com";
       PAPERLESS_OCR_LANGUAGE = "eng";
       PAPERLESS_CONSUMER_IGNORE_PATTERN = [
         ".DS_STORE/*"
@@ -15,9 +16,7 @@
   };
 
   services.caddy.virtualHosts."docs.veracoechea.com".extraConfig = ''
-    tls internal
+    tls /var/lib/acme/veracoechea.com/fullchain.pem /var/lib/acme/veracoechea.com/key.pem
     reverse_proxy 127.0.0.1:28981
   '';
-
-  # networking.firewall.interfaces.enp8s0.allowedTCPPorts = [28981];
 }

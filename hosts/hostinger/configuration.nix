@@ -48,6 +48,7 @@
     fastfetch
     nano
     btop
+    neovim
   ];
 
   security.sudo.wheelNeedsPassword = false;
