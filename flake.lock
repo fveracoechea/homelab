@@ -146,11 +146,11 @@
         "ultrashell": "ultrashell"
       },
       "locked": {
-        "lastModified": 1782839632,
-        "narHash": "sha256-VS4j6vYdaYlamSdhE6lGXXFByMaYCHOVzFw4qT+XYdY=",
+        "lastModified": 1783187096,
+        "narHash": "sha256-g+ecoZxhZXNBlj/9tPVBGcsqGD+A6SI6ZmFumRmeu/Y=",
         "owner": "fveracoechea",
         "repo": "dotfiles",
-        "rev": "00c7bd7978c58c6a285c0ad863938f9884fe69bb",
+        "rev": "60632db5fe8649b42814b0e38cf6c6b3876613ec",
         "type": "github"
       },
       "original": {
@@ -244,11 +244,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783099620,
-        "narHash": "sha256-prQSM9PGnrfSaqknJOZ3DCQKbpMiXAWLVC5SHbjLcJ4=",
+        "lastModified": 1783134515,
+        "narHash": "sha256-qMoZazubXlXUD9k/syJ/aiWC4X4g73mwVmZ7Z4+rdpM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "b2e4390ff35319c52935d6a700b615da4c0f204d",
+        "rev": "b885baad531fa3d3beae2ba9a0712d22974d8016",
         "type": "github"
       },
       "original": {

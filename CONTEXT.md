@@ -41,21 +41,22 @@ User-level config on homelab is delegated to `home-manager`; both system and use
 │       ├── networking.nix         ← static IP, firewall (80/tcp, 443/tcp, 3478/udp)
 │       └── disko-config.nix       ← declarative disk partitioning
 └── services/
-    ├── caddy.nix                  ← reverse proxy: LAN (10.0.0.2:443) + mesh (tailscale0:443), tls internal
+    ├── caddy.nix                  ← reverse proxy + security.acme wildcard cert (Let's Encrypt via Cloudflare DNS-01)
     ├── paperless.nix              ← document management (docs.veracoechea.com, 10.0.0.2:28981)
     ├── immich.nix                 ← photo/video management (photos.veracoechea.com, 10.0.0.2:2283)
-    ├── vaultwarden.nix            ← password manager (passwords.veracoechea.com, LAN-only HTTPS)
+    ├── vaultwarden.nix            ← password manager (passwords.veracoechea.com, LAN-only HTTPS, PostgreSQL via configurePostgres)
     ├── headscale.nix              ← Tailscale control plane on VPS (vpn.veracoechea.com, NixOS-native + SQLite + embedded DERP)
-    ├── headplane.nix              ← Headscale web UI on VPS (ui.veracoechea.com, NixOS-native, API key auth)
-    └── tailscale.nix              ← Tailscale client on homelab (joins tailnet, advertises 10.0.0.0/24)
+    ├── headplane.nix              ← Headscale web UI on VPS (gateway.veracoechea.com, NixOS-native, API key auth)
+    └── tailscale.nix              ← Tailscale client on homelab (joins tailnet via Headscale, advertises 10.0.0.0/24)
 ```
 
 ## Notes
 
-- Services are bound to the homelab's LAN IP `10.0.0.2` and firewall ports are opened only on `enp8s0`, so they are reachable only from `10.0.0.0/24` via LAN. Mesh clients reach them via Caddy subdomain virtualHosts on the `tailscale0` interface.
-- TLS for homelab vhosts is provided by a wildcard Let's Encrypt cert for `*.veracoechea.com`, issued via `security.acme` using DNS-01 challenge against Cloudflare (`services/caddy.nix`). Caddy serves the cert from `/var/lib/acme/veracoechea.com/`; no client-side CA installation needed. The Cloudflare API token lives at `/var/lib/caddy/cloudflare-token` (not the Nix store) — create it before first apply (Cloudflare API token with `Zone:DNS:Edit` on `veracoechea.com`, file content `CF_API_TOKEN=...`).
-- Paperless reads its initial admin password from `/var/lib/paperless/admin-password` (not the Nix store) via `services.paperless.passwordFile`. Create it before first apply; the superuser (`admin`) is created automatically on startup.
-- Vaultwarden's `ADMIN_TOKEN` secret lives in `/var/lib/vaultwarden/vaultwarden.env` (not the Nix store) — create it before first apply.
-- Tailscale auth key lives in `/var/lib/tailscale/auth-key` (not the Nix store). Generate it via `headscale preauthkeys create` on the VPS after Headscale is running, then place it at this path before applying the homelab config.
-- Headplane secrets live in `/var/lib/headplane/` (not the Nix store): `cookie-secret` (exactly 32 characters — headplane validates the length strictly; use `openssl rand -hex 16` with no trailing newline, do NOT use base64). The Headscale API key is not stored on disk — it is pasted into the Headplane web UI at login (API-key auth, no OIDC). Generate it via `headscale apikeys create` on the VPS after Headscale is running.
+- Services are bound to the homelab's LAN IP `10.0.0.2` and firewall ports are opened only on `enp8s0`, so they are reachable only from `10.0.0.0/24` via LAN. Mesh clients reach them via Caddy subdomain virtualHosts on the `tailscale0` interface. See ADR-0001 for TLS strategy, ADR-0002 for mesh VPN topology.
+- TLS for homelab vhosts is provided by a wildcard Let's Encrypt cert for `*.veracoechea.com`, issued via `security.acme` using DNS-01 challenge against Cloudflare (`services/caddy.nix`). Caddy serves the cert from `/var/lib/acme/veracoechea.com/`; no client-side CA installation needed. The Cloudflare API token lives at `/var/lib/caddy/caddy.env` (not the Nix store) — create it before first apply (Cloudflare API token with `Zone:DNS:Edit` on `veracoechea.com`, file content `CLOUDFLARE_DNS_API_TOKEN=...` — must be this exact env var name for lego).
+- Paperless reads its initial admin password from `/var/lib/paperless/admin-password` (not the Nix store) via `services.paperless.passwordFile`. Create it before first apply; the superuser (`admin`) is created automatically on startup. File must be owned by `paperless:paperless` with `600` perms.
+- Vaultwarden uses PostgreSQL via `services.vaultwarden.configurePostgres = true` — the module auto-creates the `vaultwarden` database/role and sets `DATABASE_URL`. The `ADMIN_TOKEN` secret lives in `/var/lib/vaultwarden/vaultwarden.env` (not the Nix store) — create it before first apply. File must be owned by `vaultwarden:vaultwarden` with `640` perms.
+- Tailscale auth key lives in `/var/lib/tailscale/auth-key` (not the Nix store). Generate it via `sudo headscale preauthkeys create -u <user-id>` on the VPS after Headscale is running (the `-u` flag takes a numeric user ID, not a username — find it with `sudo headscale users list`), then place it at this path before applying the homelab config. The `--login-server` flag must be in `extraUpFlags` (passed to `tailscale up`), not `extraSetFlags` (passed to `tailscale set`). If a node was previously joined to a different login server, run `sudo tailscale up --reset --login-server=https://vpn.veracoechea.com ...` once to reconcile state.
+- Headplane secrets live in `/var/lib/headplane/` (not the Nix store): `cookie-secret` (exactly 32 characters — headplane validates the length strictly; use `openssl rand -hex 16` with no trailing newline, do NOT use base64). The Headscale API key is not stored on disk — it is pasted into the Headplane web UI at login (API-key auth, no OIDC). Generate it via `sudo headscale apikeys create` on the VPS after Headscale is running. Headplane serves its UI at `/admin`, not `/` — visiting the root returns 404.
+- Headscale CLI commands require sudo — the socket at `/run/headscale/headscale.sock` is owned by the `headscale` user.
 - The `dotfiles` flake is the canonical place for cross-machine reuse; this repo is host-specific.
