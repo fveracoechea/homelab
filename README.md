@@ -2,8 +2,8 @@
 
 A multi-host NixOS configuration managed as a flake. Two machines:
 
-- **homelab** — physical AMD box (x86_64-linux) behind Xfinity residential NAT. Runs the services (Paperless, Immich, Vaultwarden) and joins the tailnet as a Tailscale client.
-- **hostinger** — VPS at Hostinger with a public IP. Runs the Headscale control plane, the Headplane web UI, and an embedded DERP relay.
+- **homelab** — physical AMD box (x86_64-linux) behind residential NAT. Runs the services (Paperless, Immich, Vaultwarden) and joins the tailnet as a Tailscale client.
+- **hostinger** — VPS with a public IP. Runs the Headscale control plane, the Headplane web UI, and an embedded DERP relay.
 
 System and user config pull reusable modules from an external [`dotfiles`](https://github.com/fveracoechea/dotfiles) flake. User config on the homelab is handled by `home-manager`.
 
@@ -14,22 +14,22 @@ System and user config pull reusable modules from an external [`dotfiles`](https
                              |
             +----------------+----------------+
             |                                 |
-   vpn.veracoechea.com              *.veracoechea.com
-            |                          (wildcard -> 100.64.0.1)
+   <control-plane fqdn>              *.<domain>
+            |                          (wildcard -> tailnet IP)
             v
    +-----------------+              +-----------------------------------+
-   | hostinger (VPS) |              | homelab (behind NAT, 10.0.0.0/24) |
+   | hostinger (VPS) |              | homelab (behind NAT, LAN subnet)  |
    |  - Headscale    |  control +   |  - Tailscale client (tailscale0)  |
    |  - Headplane    |  DERP relay  |  - Caddy (TLS, reverse proxy)     |
    |  - Tailscale    |<------------>|  - Paperless / Immich / Vaultwarden|
    +-----------------+              +-----------------------------------+
                                               ^
-                                              |  LAN only (10.0.0.0/24)
+                                              |  LAN only
                                               v
-                                    10.0.0.2 on enp8s0
+                                    homelab LAN IP on primary NIC
 ```
 
-Services on the homelab bind to `10.0.0.2` and are reachable only from the LAN. Off-LAN clients reach them through the mesh via Caddy subdomain vhosts on `tailscale0`. The VPS only runs the control plane + DERP relay; no application services are exposed on the public IP.
+Services on the homelab bind to its LAN IP and are reachable only from the LAN. Off-LAN clients reach them through the mesh via Caddy subdomain vhosts on `tailscale0`. The VPS only runs the control plane + DERP relay; no application services are exposed on the public IP.
 
 See [ADR-0002](docs/adr/0002-split-plane-mesh-vpn.md) for the mesh topology rationale and [ADR-0001](docs/adr/0001-tls-via-acme-cloudflare-dns01.md) for the TLS strategy.
 
@@ -51,12 +51,12 @@ See [ADR-0002](docs/adr/0002-split-plane-mesh-vpn.md) for the mesh topology rati
 └── services/
     ├── caddy.nix                   reverse proxy + ACME wildcard cert (Cloudflare DNS-01)
     ├── caddy-vps.nix               VPS reverse proxy (headscale, headplane)
-    ├── paperless.nix               docs.veracoechea.com  — 10.0.0.2:28981
-    ├── immich.nix                  photos.veracoechea.com  — 10.0.0.2:2283
-    ├── vaultwarden.nix             passwords.veracoechea.com  — LAN-only, PostgreSQL
-    ├── headscale.nix               vpn.veracoechea.com  — control plane + embedded DERP
-    ├── headplane.nix               network.veracoechea.com  — Headscale web UI
-    ├── tailscale.nix               homelab client (advertises 10.0.0.0/24)
+    ├── paperless.nix               document management (LAN-only HTTPS)
+    ├── immich.nix                  photo/video management (LAN-only HTTPS)
+    ├── vaultwarden.nix             password manager (LAN-only, PostgreSQL)
+    ├── headscale.nix               control plane + embedded DERP
+    ├── headplane.nix               Headscale web UI
+    ├── tailscale.nix               homelab client (advertises LAN subnet)
     ├── tailscale-vps.nix           VPS client (joins its own tailnet)
     └── fail2ban.nix
 ```
@@ -87,7 +87,7 @@ Secrets are kept out of the Nix store and placed in `/var/lib/<service>/` before
 | Host      | Path                                    | Purpose                                                  | Notes                                                        |
 |-----------|-----------------------------------------|----------------------------------------------------------|--------------------------------------------------------------|
 | homelab   | `/var/lib/caddy/caddy.env`              | `CLOUDFLARE_DNS_API_TOKEN` (Zone:DNS:Edit on the domain) | exact env var name required by lego                         |
-| homelab   | `/var/lib/paperless/admin-password`      | Paperless initial admin password                         | owned by `paperless:paperless`, mode `600`                   |
+| homelab   | `/var/lib/paperless/admin-password`     | Paperless initial admin password                         | owned by `paperless:paperless`, mode `600`                   |
 | homelab   | `/var/lib/vaultwarden/vaultwarden.env`  | `ADMIN_TOKEN`                                            | owned by `vaultwarden:vaultwarden`, mode `640`               |
 | homelab   | `/var/lib/tailscale/auth-key`           | Headscale preauth key                                    | generate with `headscale preauthkeys create -u <uid>` on VPS |
 | hostinger | `/var/lib/headplane/cookie-secret`      | Headplane cookie secret                                  | exactly 32 chars: `openssl rand -hex 16`, no trailing newline |
@@ -101,4 +101,4 @@ Headplane's Headscale API key is not stored on disk — paste it into the Headpl
 - The `dotfiles` flake is the canonical place for cross-machine reuse; this repo is host-specific.
 - Headscale CLI commands require sudo (socket at `/run/headscale/headscale.sock` is owned by the `headscale` user).
 - Headplane serves its UI at `/admin`, not `/` — visiting the root returns 404.
-- If a node was previously joined to a different login server, run `sudo tailscale up --reset --login-server=https://vpn.veracoechea.com ...` once to reconcile state.
+- If a node was previously joined to a different login server, run `sudo tailscale up --reset --login-server=<your-headscale-url> ...` once to reconcile state.
