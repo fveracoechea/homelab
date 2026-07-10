@@ -21,6 +21,7 @@ User-level config on homelab is delegated to `home-manager`; both system and use
 - **Headscale** — the self-hosted Tailscale coordination server running on the hostinger VPS (`services/headscale.nix`). NixOS-native, SQLite, embedded DERP relay. Domain: `vpn.veracoechea.com`.
 - **Headplane** — the web UI for Headscale running on the hostinger VPS (`services/headplane.nix`). NixOS-native (built-in nixpkgs module). API key auth (no OIDC). Domain: `network.veracoechea.com`.
 - **Tailscale client** — the mesh VPN client running on the homelab (`services/tailscale.nix`). Joins the tailnet managed by Headscale, advertises the `10.0.0.0/24` LAN subnet as a network route. Uses official Tailscale clients on all devices.
+- **Ollama** — the local LLM server running on the homelab (`services/ollama.nix`). NixOS-native (`services.ollama`) using `ollama-rocm` for AMD GPU acceleration. Pinned to the dedicated RX 7600 (gfx1102, 8GB VRAM) via `ROCR_VISIBLE_DEVICES=0` (the Ryzen iGPU at renderD129/gfx1036 is left idle), with `HSA_OVERRIDE_GFX_VERSION=11.0.0` (`services.ollama.rocmOverrideGfx`) since the bundled ROCm officially targets gfx1100/gfx1101 and the RX 7600 needs to masquerade as gfx1100. Listens on `127.0.0.1:11434` (localhost only - no Caddy vhost, reach it via SSH port forwarding or Tailscale). Auto-pulls `qwen2.5:3b` and `qwen3.5:9b` on first start via `services.ollama.loadModels`.
 - **Mesh interface** — the WireGuard interface created by the Tailscale client on the homelab. Named `tailscale0`. Caddy serves subdomain virtualHosts on this interface; firewall opens 443 only on `tailscale0` and `enp8s0`.
 - **DERP relay** — Tailscale's fallback relay for NAT traversal when direct peer-to-peer fails. Embedded in Headscale on the VPS (STUN on `3478/udp`). Uses Tailscale's public DERP network as additional fallback (disabled — self-contained).
 - **MagicDNS** — Tailscale's built-in DNS that resolves `*.tailnet.veracoechea.com` to tailnet IPs for joined devices.
@@ -47,7 +48,8 @@ User-level config on homelab is delegated to `home-manager`; both system and use
     ├── vaultwarden.nix            ← password manager (passwords.veracoechea.com, LAN-only HTTPS, PostgreSQL via configurePostgres)
     ├── headscale.nix              ← Tailscale control plane on VPS (vpn.veracoechea.com, NixOS-native + SQLite + embedded DERP)
     ├── headplane.nix              ← Headscale web UI on VPS (network.veracoechea.com, NixOS-native, API key auth)
-    └── tailscale.nix              ← Tailscale client on homelab (joins tailnet via Headscale, advertises 10.0.0.0/24)
+    ├── tailscale.nix              ← Tailscale client on homelab (joins tailnet via Headscale, advertises 10.0.0.0/24)
+    └── ollama.nix                 ← Local LLM server on homelab (localhost:11434, ROCm on RX 7600 gfx1102)
 ```
 
 ## Notes

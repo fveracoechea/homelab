@@ -8,6 +8,7 @@
     ../../services/immich.nix
     ../../services/vaultwarden.nix
     ../../services/tailscale.nix
+    ../../services/ollama.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
