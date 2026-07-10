@@ -58,6 +58,8 @@ See [ADR-0002](docs/adr/0002-split-plane-mesh-vpn.md) for the mesh topology rati
     ├── headplane.nix               Headscale web UI
     ├── tailscale.nix               homelab client (advertises LAN subnet)
     ├── tailscale-vps.nix           VPS client (joins its own tailnet)
+    ├── paperless-gpt.nix           AI document enhancement for paperless-ngx (podman container)
+    ├── home-assistant.nix          smart-home automation (home.veracoechea.com)
     └── fail2ban.nix
 ```
 
@@ -91,6 +93,7 @@ Secrets are kept out of the Nix store and placed in `/var/lib/<service>/` before
 | homelab   | `/var/lib/vaultwarden/vaultwarden.env`  | `ADMIN_TOKEN`                                            | owned by `vaultwarden:vaultwarden`, mode `640`               |
 | homelab   | `/var/lib/tailscale/auth-key`           | Headscale preauth key                                    | generate with `headscale preauthkeys create -u <uid>` on VPS |
 | hostinger | `/var/lib/headplane/cookie-secret`      | Headplane cookie secret                                  | exactly 32 chars: `openssl rand -hex 16`, no trailing newline |
+| homelab   | `/var/lib/paperless-gpt/paperless-gpt.env` | `PAPERLESS_API_TOKEN` (generate in paperless-ngx admin) | owned by `root:root`, mode `600`; create `/var/lib/paperless-gpt/{prompts,config,data}` dirs before first apply |
 
 Headplane's Headscale API key is not stored on disk — paste it into the Headplane UI at first login (API-key auth, no OIDC). See [ADR-0004](docs/adr/0004-headplane-api-key-auth-no-oidc.md).
 

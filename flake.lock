@@ -146,11 +146,11 @@
         "ultrashell": "ultrashell"
       },
       "locked": {
-        "lastModified": 1783634736,
-        "narHash": "sha256-oOYMOVsZHuThGw7RTj65T8MdMAhhhLqhj76WP2QI+cY=",
+        "lastModified": 1783722985,
+        "narHash": "sha256-771WX/WilufTxfuhlwj43usPLUnsClckeAxPQuSsfcw=",
         "owner": "fveracoechea",
         "repo": "dotfiles",
-        "rev": "8bcf0bf5a5f49f878e94e35f4ba290295a006505",
+        "rev": "6e3fc93f2c2a05b99fac1e44715b6f2c2305bddb",
         "type": "github"
       },
       "original": {

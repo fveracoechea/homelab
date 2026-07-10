@@ -9,6 +9,8 @@
     ../../services/vaultwarden.nix
     ../../services/tailscale.nix
     ../../services/ollama.nix
+    ../../services/paperless-gpt.nix
+    ../../services/home-assistant.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
