@@ -22,7 +22,7 @@ in {
       dns = {
         magic_dns = true;
         base_domain = "tailnet.veracoechea.com";
-        nameservers.global = ["1.1.1.1"];
+        nameservers.global = ["10.0.0.2"];
       };
 
       derp = {

@@ -3,6 +3,7 @@
     ./hardware-configuration.nix
     inputs.dotfiles.nixosModules.default
 
+    ../../services/adguardhome.nix
     ../../services/caddy.nix
     ../../services/paperless.nix
     ../../services/immich.nix
