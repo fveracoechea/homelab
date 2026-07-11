@@ -9,10 +9,7 @@
         bind_hosts = ["10.0.0.2"];
         port = 53;
         upstream_dns = [
-          "1.1.1.1"
-          "1.0.0.1"
-          "9.9.9.9"
-          "149.112.112.112"
+          "127.0.0.1:5335"
         ];
         bootstrap_dns = ["1.1.1.1" "9.9.9.9"];
       };
@@ -20,16 +17,20 @@
       filtering = {
         protection_enabled = true;
         filtering_enabled = true;
-        parental_enabled = false;
+        parental_enabled = true;
         safe_search.enabled = false;
       };
 
-      filters = map (url: {enabled = true; url = url;}) [
-        "https://adguardteam.github.io/AdGuardDNSFilter/Filters/filter.txt"
-        "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
-        "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
-      ];
+      filters =
+        map (url: {
+          enabled = true;
+          url = url;
+        }) [
+          "https://adguardteam.github.io/AdGuardDNSFilter/Filters/filter.txt"
+          "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
+          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
+        ];
     };
   };
 

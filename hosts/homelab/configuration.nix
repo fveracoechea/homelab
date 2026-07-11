@@ -4,6 +4,7 @@
     inputs.dotfiles.nixosModules.default
 
     ../../services/adguardhome.nix
+    ../../services/unbound.nix
     ../../services/caddy.nix
     ../../services/paperless.nix
     ../../services/immich.nix
