@@ -25,6 +25,8 @@
       };
 
       filters = map (url: {enabled = true; url = url;}) [
+        "https://adguardteam.github.io/AdGuardDNSFilter/Filters/filter.txt"
+        "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
         "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
         "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
       ];
