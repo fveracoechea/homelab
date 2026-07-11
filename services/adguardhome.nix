@@ -31,7 +31,7 @@
     };
   };
 
-  services.caddy.virtualHosts."dns.veracoechea.com".extraConfig = ''
+  services.caddy.virtualHosts."addblock.veracoechea.com".extraConfig = ''
     tls /var/lib/acme/veracoechea.com/fullchain.pem /var/lib/acme/veracoechea.com/key.pem
     reverse_proxy 127.0.0.1:8082
   '';
