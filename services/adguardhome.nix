@@ -3,8 +3,16 @@
     enable = true;
     host = "127.0.0.1";
     port = 8082;
+    mutableSettings = false;
 
     settings = {
+      users = [
+        {
+          name = "admin";
+          password = "$2b$12$qTJxOKiP1YJyCOiC0vn51eHY8MJwQXiVAQBbbQSHCRMPD8RtlahBS";
+        }
+      ];
+
       dns = {
         bind_hosts = ["10.0.0.2"];
         port = 53;
@@ -12,6 +20,12 @@
           "127.0.0.1:5335"
         ];
         bootstrap_dns = ["1.1.1.1" "9.9.9.9"];
+        rewrites = [
+          {
+            domain = "*.veracoechea.com";
+            answer = "10.0.0.2";
+          }
+        ];
       };
 
       filtering = {
