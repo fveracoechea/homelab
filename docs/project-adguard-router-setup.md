@@ -72,7 +72,7 @@ From `services/adguardhome.nix`:
 | Setting | Value |
 |---|---|
 | DNS bind address | `10.0.0.2:53` |
-| Web UI | `127.0.0.1:8082` (proxied by Caddy at `adguard.veracoechea.com`) |
+| Web UI | `127.0.0.1:8082` (proxied by Caddy at `dns.veracoechea.com`) |
 | Upstream DNS (DoT) | `1.1.1.1#cloudflare-dns.com`, `1.0.0.1#cloudflare-dns.com`, `9.9.9.9#dns.quad9.net`, `149.112.112.112#dns.quad9.net` |
 | Bootstrap DNS | `1.1.1.1`, `9.9.9.9` |
 | Filtering | Enabled (protection + ad blocking) |
@@ -158,7 +158,7 @@ nixos-rebuild test --flake .#hostinger
 Verify on the homelab:
 - `systemctl status adguardhome` is active
 - `ss -ulnp | grep ':53'` shows AdGuard listening on `10.0.0.2:53`
-- Visit `https://adguard.veracoechea.com` - you should see the AdGuard onboarding wizard
+- Visit `https://dns.veracoechea.com` - you should see the AdGuard onboarding wizard
 - Complete the wizard: set admin username and password
 
 Verify on the VPS:
@@ -229,7 +229,7 @@ In the ASUS admin interface:
    ```bash
    nslookup google.com
    ```
-   Should resolve via `10.0.0.2` (AdGuard). Check the AdGuard query log at `https://adguard.veracoechea.com` - you should see the query appear.
+   Should resolve via `10.0.0.2` (AdGuard). Check the AdGuard query log at `https://dns.veracoechea.com` - you should see the query appear.
 
 2. **Test ad-blocking**:
    ```bash
@@ -238,7 +238,7 @@ In the ASUS admin interface:
    Should return `0.0.0.0` (blocked by AdGuard).
 
 3. **Check the AdGuard dashboard**
-   - Go to `https://adguard.veracoechea.com`
+   - Go to `https://dns.veracoechea.com`
    - Dashboard should show queries coming in from LAN devices
    - Query log should show a mix of "Processed" and "Blocked" entries
 
@@ -252,7 +252,7 @@ In the ASUS admin interface:
 
 The Nix config includes two starter blocklists (malware + malicious URLs). For actual ad-blocking, add more via the AdGuard web UI:
 
-1. Go to `https://adguard.veracoechea.com` > Filters > DNS blocklists
+1. Go to `https://dns.veracoechea.com` > Filters > DNS blocklists
 2. Click "Add blocklist"
 3. Recommended starter blocklists:
    - **AdGuard DNS filter** - `https://adguardteam.github.io/AdGuardDNSFilter/Filters/filter.txt` (the main AdGuard filter, blocks ads + trackers)
