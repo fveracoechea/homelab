@@ -17,12 +17,12 @@
       qname-minimisation = true;
 
       local-data = [
-        "\"docs.veracoechea.com. IN A 10.0.0.2\""
-        "\"photos.veracoechea.com. IN A 10.0.0.2\""
-        "\"warden.veracoechea.com. IN A 10.0.0.2\""
-        "\"home.veracoechea.com. IN A 10.0.0.2\""
-        "\"ai-docs.veracoechea.com. IN A 10.0.0.2\""
-        "\"ad-blocker.veracoechea.com. IN A 10.0.0.2\""
+        "\"docs.veracoechea.com. IN A 100.64.0.1\""
+        "\"photos.veracoechea.com. IN A 100.64.0.1\""
+        "\"warden.veracoechea.com. IN A 100.64.0.1\""
+        "\"home.veracoechea.com. IN A 100.64.0.1\""
+        "\"ai-docs.veracoechea.com. IN A 100.64.0.1\""
+        "\"ad-blocker.veracoechea.com. IN A 100.64.0.1\""
       ];
     };
 

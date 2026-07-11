@@ -14,7 +14,7 @@
       ];
 
       dns = {
-        bind_hosts = ["10.0.0.2"];
+        bind_hosts = ["0.0.0.0"];
         port = 53;
         upstream_dns = [
           "127.0.0.1:5335"
