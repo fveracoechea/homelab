@@ -52,7 +52,7 @@ User-level config on homelab is delegated to `home-manager`; both system and use
     ├── caddy.nix                  ← reverse proxy + security.acme wildcard cert (Let's Encrypt via Cloudflare DNS-01)
     ├── paperless.nix              ← document management (docs.veracoechea.com, 10.0.0.2:28981)
     ├── immich.nix                 ← photo/video management (photos.veracoechea.com, 10.0.0.2:2283)
-    ├── vaultwarden.nix            ← password manager (passwords.veracoechea.com, LAN-only HTTPS, PostgreSQL via configurePostgres)
+    ├── vaultwarden.nix            ← password manager (warden.veracoechea.com, LAN-only HTTPS, PostgreSQL via configurePostgres)
     ├── headscale.nix              ← Tailscale control plane on VPS (vpn.veracoechea.com, NixOS-native + SQLite + embedded DERP)
     ├── headplane.nix              ← Headscale web UI on VPS (network.veracoechea.com, NixOS-native, API key auth)
     ├── tailscale.nix              ← Tailscale client on homelab (joins tailnet via Headscale, advertises 10.0.0.0/24)
