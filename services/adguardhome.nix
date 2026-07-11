@@ -6,7 +6,7 @@
 
     settings = {
       dns = {
-        bind_addresses = ["10.0.0.2"];
+        bind_hosts = ["10.0.0.2"];
         port = 53;
         upstream_dns = [
           "1.1.1.1#cloudflare-dns.com"
