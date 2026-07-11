@@ -28,6 +28,7 @@
       "tplink" # TP-Link Kasa smart plugs, switches, bulbs
       "tplink_tapo" # TP-Link Tapo smart devices
       "wake_on_lan" # turn on networked devices via Wake-on-LAN
+      "webostv" # LG webOS TV media player, notifications, and pairing
     ];
 
     extraPackages = ps:
