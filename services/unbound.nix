@@ -15,6 +15,15 @@
       prefetch = true;
       prefetch-key = true;
       qname-minimisation = true;
+
+      local-data = [
+        "\"docs.veracoechea.com. IN A 10.0.0.2\""
+        "\"photos.veracoechea.com. IN A 10.0.0.2\""
+        "\"warden.veracoechea.com. IN A 10.0.0.2\""
+        "\"home.veracoechea.com. IN A 10.0.0.2\""
+        "\"ai-docs.veracoechea.com. IN A 10.0.0.2\""
+        "\"ad-blocker.veracoechea.com. IN A 10.0.0.2\""
+      ];
     };
 
     settings.remote-control = {
