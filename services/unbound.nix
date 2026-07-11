@@ -3,6 +3,7 @@
     enable = true;
     resolveLocalQueries = false;
     enableRootTrustAnchor = true;
+    localControlSocketPath = "/run/unbound/unbound.ctl";
 
     settings.server = {
       interface = ["127.0.0.1"];
@@ -14,6 +15,11 @@
       prefetch = true;
       prefetch-key = true;
       qname-minimisation = true;
+    };
+
+    settings.remote-control = {
+      control-enable = true;
+      control-interface = "/run/unbound/unbound.ctl";
     };
   };
 }
