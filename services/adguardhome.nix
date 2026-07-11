@@ -9,7 +9,7 @@
       users = [
         {
           name = "admin";
-          password = "$2b$12$qTJxOKiP1YJyCOiC0vn51eHY8MJwQXiVAQBbbQSHCRMPD8RtlahBS";
+          password = "$2b$12$jeSGNoPYjq6WpVsQ6SMU3eYpOR7XtwqlUOZS/nns4/T.nfDXxl5Jm";
         }
       ];
 
