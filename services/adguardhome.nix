@@ -47,6 +47,12 @@
     reverse_proxy 127.0.0.1:8082
   '';
 
-  networking.firewall.interfaces.enp8s0.allowedUDPPorts = [53];
-  networking.firewall.interfaces.tailscale0.allowedUDPPorts = [53];
+  networking.firewall.interfaces.enp8s0 = {
+    allowedUDPPorts = [53];
+    allowedTCPPorts = [53];
+  };
+  networking.firewall.interfaces.tailscale0 = {
+    allowedUDPPorts = [53];
+    allowedTCPPorts = [53];
+  };
 }
