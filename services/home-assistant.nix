@@ -4,7 +4,6 @@
   services.home-assistant = {
     enable = true;
     openFirewall = false;
-    configWritable = false;
 
     extraComponents = [
       "default_config" # meta-component: enables the standard integration bundle (frontend, automation, integrations UI, onboarding, etc.)
@@ -29,6 +28,8 @@
       "tplink_tapo" # TP-Link Tapo smart devices
       "wake_on_lan" # turn on networked devices via Wake-on-LAN
       "webostv" # LG webOS TV media player, notifications, and pairing
+      "zwave_js" # Z-Wave JS integration (connects to services.zwave-js via WebSocket)
+      "zha" # Zigbee Home Automation (uses the Z-Stick 10 Pro's Zigbee radio; serial port configured in HA UI)
     ];
 
     extraPackages = ps:
@@ -56,11 +57,23 @@
         use_x_forwarded_for = true;
         trusted_proxies = ["127.0.0.1" "::1"];
       };
+      automation = "!include automations.yaml";
+      script = "!include scripts.yaml";
+      scene = "!include scenes.yaml";
     };
   };
 
   systemd.services.home-assistant.serviceConfig = {
     AmbientCapabilities = ["CAP_NET_ADMIN" "CAP_NET_RAW"];
+  };
+
+  # Z-Wave JS server. HA connects to it via WebSocket (ws://localhost:3000).
+  # The Z-Stick 10 Pro's Z-Wave radio is on if01 of the CP2105 dual UART.
+  # Generate security keys before first apply: see docs/project-zwave-home-assistant.md Step 4.
+  services.zwave-js = {
+    enable = true;
+    serialPort = "/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_00D9B441-if01-port0";
+    secretsConfigFile = "/var/lib/zwave-js/secrets.json";
   };
 
   services.caddy.virtualHosts."home.veracoechea.com".extraConfig = ''

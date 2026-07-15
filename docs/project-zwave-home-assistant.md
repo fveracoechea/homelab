@@ -18,7 +18,7 @@ The thermostat is the immediate driver for Z-Wave. Zigbee is enabled alongside i
 - Controls up to 3H/2C heat pump or 2H/2C conventional; reports indoor humidity (display only, no humidification control)
 - Onboard schedule cannot be changed via Z-Wave - automate in HA instead
 
-### Controller stick: Aeotec Z-Stick 10 Pro (not yet purchased)
+### Controller stick: Aeotec Z-Stick 10 Pro
 - Model ZWA060-A, ASIN B0DV9RFSR9
 - Amazon: https://www.amazon.com/dp/B0DV9RFSR9
 - ~$59.99 new (as of Jul 2026)
@@ -27,11 +27,9 @@ The thermostat is the immediate driver for Z-Wave. Zigbee is enabled alongside i
   - Zigbee 3.0 (EFR32MG21)
 - S2 security (Z-Wave), SmartStart
 - Shows up as **two serial ports** via a Silicon Labs CP2105 Dual USB to UART Bridge Controller
-- by-id paths will look like:
-  - `/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_<SERIAL>-if00-port0` (Zigbee)
-  - `/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_<SERIAL>-if01-port0` (Z-Wave)
-- `<SERIAL>` is unique per stick (e.g., `00F4C829`). The `if00`/`if01` suffix differentiates the two UART interfaces.
-- Per Aeotec docs: `if01-port0` is typically Z-Wave, `if00-port0` is typically Zigbee, but this can vary - try the other if the first doesn't work.
+- by-id paths on the homelab (serial `00D9B441`, verified via `udevadm`):
+  - `/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_00D9B441-if00-port0` (Zigbee - "Enhanced Com Port")
+  - `/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_00D9B441-if01-port0` (Z-Wave - "Standard Com Port")
 - No external antenna needed - built-in chip antenna. USB extension cable recommended to avoid metal case / Wi-Fi interference.
 
 ## Protocol decision: Z-Wave + Zigbee (not Matter/Thread)
@@ -144,34 +142,24 @@ Strictly ordered. The user rebuilds/tests the system themselves - never build th
 ### Step 1 - NixOS config (DONE)
 
 The `services/home-assistant.nix` file has been edited to add:
-- `services.zwave-js` block (enable, serialPort placeholder, secretsConfigFile)
+- `services.zwave-js` block (enable, real by-id serial port for serial `00D9B441` `if01-port0`, secretsConfigFile pointing at `/var/lib/zwave-js/secrets.json`)
 - `"zwave_js"` and `"zha"` in `extraComponents`
 
-`nix flake check` passes. The zwave-js service will fail to start until the serial port placeholder is replaced with the actual path.
+`nix flake check` passes. The zwave-js service will fail to start until the secrets file exists at `/var/lib/zwave-js/secrets.json` (see Step 4) - that's expected.
 
-### Step 2 - Hardware setup (user does this)
+### Step 2 - Hardware setup (DONE)
 
-- Buy Aeotec Z-Stick 10 Pro (ASIN B0DV9RFSR9, ~$59.99)
-- Plug into homelab box via a USB extension cable (3-6 ft) to move the stick away from the metal case and Wi-Fi interference
-- Identify the two serial ports:
-  ```
-  ls -l /dev/serial/by-id/
-  ```
-  Look for two symlinks containing `Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller`:
-  - `...if00-port0` = Zigbee (for ZHA, configured in HA UI)
-  - `...if01-port0` = Z-Wave (for `services.zwave-js.serialPort` in NixOS)
-- If unsure which is which, check with: `udevadm info -a -n /dev/ttyACM0 | grep '{interface}'`
-- Record the full by-id paths
+- Aeotec Z-Stick 10 Pro (ASIN B0DV9RFSR9, ~$59.99) plugged into the homelab box via USB
+- Two serial ports detected (verified with `ls -l /dev/serial/by-id/` and `udevadm info -a`):
+  - `...if00-port0` = Zigbee (for ZHA, configured in HA UI) - "Enhanced Com Port"
+  - `...if01-port0` = Z-Wave (for `services.zwave-js.serialPort` in NixOS) - "Standard Com Port"
 
-### Step 3 - Replace the serial port placeholder (user does this)
+### Step 3 - Replace the serial port placeholder (DONE)
 
-In `services/home-assistant.nix`, replace `REPLACE_ME` in the `services.zwave-js.serialPort` line with the actual serial number from the by-id path. The path should look like:
+The real by-id path is already in `services/home-assistant.nix`:
 ```
-/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_00F4C829-if01-port0
+/dev/serial/by-id/usb-Silicon_Labs_CP2105_Dual_USB_to_UART_Bridge_Controller_00D9B441-if01-port0
 ```
-(Where `00F4C829` is the actual serial number of your stick)
-
-If the Z-Wave radio is on `if00` instead of `if01`, use that. Aeotec docs say it can vary.
 
 ### Step 4 - Generate Z-Wave security keys (user does this on the host)
 
