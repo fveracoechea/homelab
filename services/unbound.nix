@@ -1,4 +1,9 @@
 {...}: {
+  boot.kernel.sysctl = {
+    "net.core.rmem_max" = 4194304;
+    "net.core.wmem_max" = 4194304;
+  };
+
   services.unbound = {
     enable = true;
     resolveLocalQueries = false;
@@ -12,6 +17,21 @@
         "127.0.0.0/8 allow"
         "10.0.0.0/24 allow"
       ];
+
+      num-threads = 12;
+      msg-cache-size = "64m";
+      rrset-cache-size = "128m";
+      key-cache-size = "4m";
+      neg-cache-size = "4m";
+      msg-cache-slabs = 16;
+      rrset-cache-slabs = 16;
+      infra-cache-slabs = 16;
+      key-cache-slabs = 16;
+
+      so-reuseport = true;
+      so-rcvbuf = "4m";
+      so-sndbuf = "4m";
+
       prefetch = true;
       prefetch-key = true;
       qname-minimisation = true;
