@@ -38,11 +38,18 @@
           enabled = true;
           url = url;
         }) [
+          # AdGuard DNS filter - main ad/tracker/mobile/social/cryptominer compilation (EasyList + EasyPrivacy + AdGuard Base, simplified for DNS-level blocking)
           "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
+          # Smart TV telemetry and in-app ads (Samsung, LG, Roku, etc.) - near-zero overlap with the main filter
+          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_7.txt"
+          # The Big List of Hacked Malware Web Sites - sites compromised with malware/ransomware/trojans
+          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
+          # Malicious URL Blocklist (URLHaus) - malicious URLs from abuse.ch's database
+          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
+          # HaGeZi's Threat Intelligence Feeds - malware, cryptojacking, spam, scam, phishing (broader than #9/#11)
+          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt"
           # breaks streaming apps (Peacock, Netflix) - blocks Conviva, Adobe Analytics, Comscore endpoints that apps block on
           # "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
-          "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
         ];
     };
   };
