@@ -46,10 +46,8 @@
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
           # Malicious URL Blocklist (URLHaus) - malicious URLs from abuse.ch's database
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
-          # HaGeZi's Threat Intelligence Feeds - malware, cryptojacking, spam, scam, phishing (broader than #9/#11)
+          # HaGeZi's Threat Intelligence Feeds - malware, cryptojacking, spam, scam, phishing
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt"
-          # breaks streaming apps (Peacock, Netflix) - blocks Conviva, Adobe Analytics, Comscore endpoints that apps block on
-          # "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
         ];
     };
   };
