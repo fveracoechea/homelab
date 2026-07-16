@@ -38,8 +38,9 @@
           enabled = true;
           url = url;
         }) [
-           "https://adguardteam.github.io/AdGuardDNSFilter/Filters/filter.txt"
-           # "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"  # breaks streaming apps (Peacock, Netflix) - blocks Conviva, Adobe Analytics, Comscore endpoints that apps block on
+          "https://adguardteam.github.io/AdGuardDNSFilter/Filters/filter.txt"
+          # breaks streaming apps (Peacock, Netflix) - blocks Conviva, Adobe Analytics, Comscore endpoints that apps block on
+          # "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_9.txt"
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
         ];
