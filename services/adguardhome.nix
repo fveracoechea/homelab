@@ -20,6 +20,10 @@
           "127.0.0.1:5335"
         ];
         bootstrap_dns = ["1.1.1.1" "9.9.9.9"];
+
+        cache_enabled = true;
+        cache_size = 52428800;
+        cache_optimistic = true;
       };
 
       filtering = {
