@@ -18,17 +18,16 @@
         "10.0.0.0/24 allow"
       ];
 
-      num-threads = 12;
+      num-threads = 2;
       msg-cache-size = "64m";
       rrset-cache-size = "128m";
       key-cache-size = "4m";
       neg-cache-size = "4m";
-      msg-cache-slabs = 16;
-      rrset-cache-slabs = 16;
-      infra-cache-slabs = 16;
-      key-cache-slabs = 16;
+      msg-cache-slabs = 4;
+      rrset-cache-slabs = 4;
+      infra-cache-slabs = 4;
+      key-cache-slabs = 4;
 
-      so-reuseport = true;
       so-rcvbuf = "4m";
       so-sndbuf = "4m";
 

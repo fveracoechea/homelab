@@ -19,17 +19,21 @@
         upstream_dns = [
           "127.0.0.1:5335"
         ];
+        fallback_dns = ["1.1.1.1" "9.9.9.9"];
         bootstrap_dns = ["1.1.1.1" "9.9.9.9"];
 
         cache_enabled = true;
         cache_size = 52428800;
         cache_optimistic = true;
+
+        upstream_timeout = "3s";
+        enable_dnssec = false;
       };
 
       filtering = {
         protection_enabled = true;
         filtering_enabled = true;
-        parental_enabled = true;
+        parental_enabled = false;
         safe_search.enabled = false;
       };
 
@@ -48,6 +52,8 @@
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"
           # HaGeZi's Threat Intelligence Feeds - malware, cryptojacking, spam, scam, phishing
           "https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt"
+          # HaGeZi's NSFW DNS Blocklist - adult content blocking (replaces parental_enabled, which used the failing family.adguard-dns.com upstream)
+          "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/nsfw.txt"
         ];
     };
   };
