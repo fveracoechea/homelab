@@ -73,7 +73,8 @@ From `services/adguardhome.nix`:
 |---|---|
 | DNS bind address | `10.0.0.2:53` |
 | Web UI | `127.0.0.1:8082` (proxied by Caddy at `ad-blocker.veracoechea.com`) |
-| Upstream DNS (DoT) | `1.1.1.1#cloudflare-dns.com`, `1.0.0.1#cloudflare-dns.com`, `9.9.9.9#dns.quad9.net`, `149.112.112.112#dns.quad9.net` |
+| Upstream DNS | `1.1.1.1` (Cloudflare) |
+| Fallback DNS | `9.9.9.9` (Quad9) |
 | Bootstrap DNS | `1.1.1.1`, `9.9.9.9` |
 | Filtering | Enabled (protection + ad blocking) |
 | Starter blocklists | AdGuard HostlistsRegistry filters 9 (malware) and 11 (malicious URLs) |
@@ -106,7 +107,7 @@ The homelab does NOT use AdGuard as its system DNS. This avoids a boot-order dep
 
 ```
 device -> DHCP DNS (10.0.0.2) -> AdGuard Home (enp8s0, 53/udp)
-  -> filters ads -> forwards to Cloudflare/Quad9 (DoT)
+  -> filters ads -> forwards to Cloudflare (1.1.1.1), fallback Quad9 (9.9.9.9)
 ```
 
 ### Phone on cellular (Tailscale connected)
@@ -115,7 +116,7 @@ device -> DHCP DNS (10.0.0.2) -> AdGuard Home (enp8s0, 53/udp)
 phone -> 100.100.100.100 (Tailscale local proxy)
   -> Tailscale daemon forwards to 10.0.0.2:53 (via mesh tunnel)
   -> AdGuard Home (tailscale0, 53/udp)
-  -> filters ads -> forwards to Cloudflare/Quad9 (DoT)
+  -> filters ads -> forwards to Cloudflare (1.1.1.1), fallback Quad9 (9.9.9.9)
 ```
 
 ### Phone on home WiFi (Tailscale connected)
@@ -124,7 +125,7 @@ phone -> 100.100.100.100 (Tailscale local proxy)
 phone -> 100.100.100.100 (Tailscale shadows DHCP DNS)
   -> Tailscale daemon forwards to 10.0.0.2:53 (via mesh tunnel, local)
   -> AdGuard Home (tailscale0, 53/udp)
-  -> filters ads -> forwards to Cloudflare/Quad9 (DoT)
+  -> filters ads -> forwards to Cloudflare (1.1.1.1), fallback Quad9 (9.9.9.9)
 ```
 
 AdGuard is hit exactly once in every scenario. No double-querying.

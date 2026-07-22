@@ -29,8 +29,8 @@ User-level config on homelab is delegated to `home-manager`; both system and use
 - **Mesh interface** — the WireGuard interface created by the Tailscale client on the homelab. Named `tailscale0`. Caddy serves subdomain virtualHosts on this interface; firewall opens 443 only on `tailscale0` and `enp8s0`.
 - **DERP relay** — Tailscale's fallback relay for NAT traversal when direct peer-to-peer fails. Embedded in Headscale on the VPS (STUN on `3478/udp`). Uses Tailscale's public DERP network as additional fallback (disabled — self-contained).
 - **MagicDNS** — Tailscale's built-in DNS that resolves `*.tailnet.veracoechea.com` to tailnet IPs for joined devices. Configured via Headscale to use `10.0.0.2` (AdGuard Home) as the global nameserver, so all tailnet devices get ad-blocking DNS automatically.
-- **AdGuard Home** — the network-wide ad-blocking DNS server running on the homelab (`services/adguardhome.nix`). NixOS-native (`services.adguardhome`). DNS listener bound to `10.0.0.2:53`, reachable from both `enp8s0` (LAN) and `tailscale0` (tailnet). Web UI on `127.0.0.1:8082`; Caddy vhost at `ad-blocker.veracoechea.com`. Upstream DNS via local Unbound recursive resolver (`127.0.0.1:5335`) - no third-party DNS provider sees queries. Bootstrap DNS (`1.1.1.1`, `9.9.9.9`) used only for resolving blocklist URLs on startup. Mutable settings (hybrid config): Nix provides the base config (upstream DNS, bind address, filtering toggles, starter blocklists); web UI changes (additional blocklists, clients, rewrites, query log settings) persist in `/var/lib/adguardhome/` between restarts. Firewall opens `53/udp` on `enp8s0` and `tailscale0` only - not exposed to the public internet (homelab is behind Xfinity NAT).
-- **Unbound** — the local recursive DNS resolver running on the homelab (`services/unbound.nix`). NixOS-native (`services.unbound`). Listens on `127.0.0.1:5335` (localhost only, no firewall needed). Performs full recursive resolution by walking the DNS tree from root servers, so no third-party DNS provider sees user queries. DNSSEC validation via root trust anchor. Privacy features: qname minimisation (sends only the minimal query to each server), prefetch (refreshes popular cache entries before expiry). Used as the sole upstream by AdGuard Home.
+- **AdGuard Home** — the network-wide ad-blocking DNS server running on the homelab (`services/adguardhome.nix`). NixOS-native (`services.adguardhome`). DNS listener bound to `10.0.0.2:53`, reachable from both `enp8s0` (LAN) and `tailscale0` (tailnet). Web UI on `127.0.0.1:8082`; Caddy vhost at `ad-blocker.veracoechea.com`. Upstream DNS via Cloudflare (`1.1.1.1`), fallback via Quad9 (`9.9.9.9`); bootstrap DNS (`1.1.1.1`, `9.9.9.9`) used only for resolving blocklist URLs on startup. Mutable settings (hybrid config): Nix provides the base config (upstream DNS, bind address, filtering toggles, starter blocklists); web UI changes (additional blocklists, clients, rewrites, query log settings) persist in `/var/lib/adguardhome/` between restarts. Firewall opens `53/udp` on `enp8s0` and `tailscale0` only - not exposed to the public internet (homelab is behind Xfinity NAT).
+
 
 ## Layout
 
@@ -48,8 +48,7 @@ User-level config on homelab is delegated to `home-manager`; both system and use
 │       ├── networking.nix         ← static IP, firewall (80/tcp, 443/tcp, 3478/udp)
 │       └── disko-config.nix       ← declarative disk partitioning
 └── services/
-    ├── adguardhome.nix             ← network-wide ad-blocking DNS (ad-blocker.veracoechea.com, 10.0.0.2:53, Unbound upstream)
-    ├── unbound.nix                 ← local recursive DNS resolver (127.0.0.1:5335, full recursion, DNSSEC, qname minimisation)
+    ├── adguardhome.nix             ← network-wide ad-blocking DNS (ad-blocker.veracoechea.com, 10.0.0.2:53, Cloudflare/Quad9 upstream)
     ├── caddy.nix                  ← reverse proxy + security.acme wildcard cert (Let's Encrypt via Cloudflare DNS-01)
     ├── paperless.nix              ← document management (docs.veracoechea.com, 10.0.0.2:28981)
     ├── immich.nix                 ← photo/video management (photos.veracoechea.com, 10.0.0.2:2283)
