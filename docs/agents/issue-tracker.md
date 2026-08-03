@@ -13,6 +13,17 @@ Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all op
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
+## Wayfinding operations
+
+How this repo expresses wayfinder maps, tickets, blocking, and frontier queries on GitHub.
+
+- **Map**: an issue labelled `wayfinder:map`. **Tickets**: child issues of the map, each labelled `wayfinder:research` / `wayfinder:prototype` / `wayfinder:grilling` / `wayfinder:task`.
+- **Parent/child**: GitHub native sub-issues via GraphQL — `gh api graphql -f query='mutation { addSubIssue(input: {issueId: "<map node id>", subIssueId: "<child node id>"}) { subIssue { number } } }'`. Node ids come from `gh api graphql -f query='query { repository(owner:"fveracoechea", name:"homelab") { issues(first:20) { nodes { number id databaseId } } } }'`.
+- **Blocking**: GitHub native issue dependencies via REST — `gh api -X POST repos/fveracoechea/homelab/issues/<blocked number>/dependencies/blocked_by -F issue_id=<blocker databaseId>` (integer `databaseId`, not the issue number). Renders as "Blocked by" in the GitHub UI.
+- **Frontier query** (open, unblocked, unclaimed children of map `<n>`): list the map's sub-issues via GraphQL `issue(number:<n>) { subIssues(first:50) { nodes { number state assignees(first:1) { nodes { login } } blockedBy(first:10) { nodes { number state } } } } }` and keep nodes that are OPEN, have no assignees, and whose `blockedBy` nodes are all CLOSED.
+- **Claim a ticket**: `gh issue edit <number> --add-assignee fveracoechea` — an open, unassigned ticket is unclaimed.
+- **Resolve a ticket**: `gh issue comment <number> --body "<resolution>"`, then `gh issue close <number>`, then append one line (ticket name as link + one-line gist) to the map body's **Decisions so far** via `gh issue edit <map number> --body-file ...`.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
