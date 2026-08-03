@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <!--
   PROTOTYPE - THROWAWAY. Not production code.
-  Question: visual direction for the baby-shower/gender-reveal invitation (ticket #4).
-  Three structurally different variants x three guest states, switchable via URL params:
-    ?variant=A|B|C   (A Storybook, B Scrapbook, C Editorial)
+  Question (round 2): MYSTERY visual direction for the invitation (ticket #4, reopened).
+  Concept pinned with @fveracoechea: playful case-file noir; only three witnesses know
+  the baby's sex (doctor -> secret envelope -> balloon store -> coded message -> cake
+  shop); parents-to-be don't know; video teaser anchors the page; guests file theories.
+  Three structurally different variants x three guest states:
+    ?variant=A|B|C   (A Dossier, B Evidence Board, C The Envelope)
     &state=landing|rsvp|reveal
-    &lang=es|en
+    &lang=es|en      (also swaps the teaser video + poster)
   Run: open this file in a browser, or `python3 -m http.server` in this directory.
-  Copy is placeholder (real copy is ticket #5). Photos are gradient placeholders;
-  their count/placement per variant IS the design decision (photo slots).
+  Copy is placeholder (real copy is ticket #5).
 -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROTOTYPE - Visual direction: baby shower invitation</title>
+<title>PROTOTYPE - Mystery direction: baby shower invitation</title>
 <style>
-  /* ============ shared tokens ============ */
+  /* ============ Rosé Pine Dawn tokens ============ */
   :root {
-    /* Rosé Pine Dawn - pink (rose/love), green (pine), blue (foam) */
     --rose: #d7827e;
     --rose-soft: #ecc5c0;
     --rose-faint: #f9ece9;
@@ -28,237 +29,251 @@
     --blue-faint: #edf5f5;
     --pine: #286983;
     --cream: #faf4ed;
+    --paper: #fffaf3;
+    --overlay: #f2e9e1;
     --ink: #575279;
     --ink-soft: #797593;
-    --white: #ffffff;
+    --mono: "JetBrains Mono", ui-monospace, "Courier New", monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
-  img { display: block; }
+  body { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
   button, input { font: inherit; }
 
-  .variant { display: none; min-height: 100vh; position: relative; }
+  .variant { display: none; min-height: 100vh; position: relative; background: var(--cream); }
   .variant.active { display: block; }
   .state { display: none; }
   .state.active { display: block; }
 
-  /* in-design language toggle (part of every design - bilingual is pinned) */
   .lang-fab {
-    position: absolute; top: 58px; right: 14px; z-index: 20;
-    display: flex; background: rgba(255,255,255,.85); backdrop-filter: blur(3px);
-    border-radius: 999px; padding: 3px; box-shadow: 0 2px 10px rgba(61,50,55,.15);
+    position: absolute; top: 58px; right: 14px; z-index: 30;
+    display: flex; background: rgba(255,255,255,.9); backdrop-filter: blur(3px);
+    border-radius: 999px; padding: 3px; box-shadow: 0 2px 10px rgba(87,82,121,.2);
   }
-  .lang-fab .lang {
-    border: 0; background: transparent; padding: 5px 10px; border-radius: 999px;
-    font-size: 12px; font-weight: 700; color: var(--ink-soft); cursor: pointer;
-  }
+  .lang-fab .lang { border: 0; background: transparent; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--ink-soft); cursor: pointer; font-family: var(--mono); }
   .lang-fab .lang.active { background: var(--ink); color: #fff; }
-
-  /* photo slots - real assets, object-fit cover; position tuned per photo */
-  .photo { overflow: hidden; }
-  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   /* ============ prototype chrome (NOT part of the designs) ============ */
   .chrome-bar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 50;
     display: flex; justify-content: center; gap: 4px;
-    padding: 8px; background: rgba(30,24,28,.92); backdrop-filter: blur(4px);
-    font-size: 13px;
+    padding: 8px; background: rgba(30,24,40,.94); backdrop-filter: blur(4px);
+    font-size: 13px; font-family: system-ui, sans-serif;
   }
-  .chrome-bar button, .chrome-bar .lang {
-    border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer;
-    background: transparent; color: #cfc4ca;
-  }
-  .chrome-bar button.active { background: #fff; color: #1e181c; font-weight: 600; }
-  .chrome-bar .sep { width: 1px; background: #564b51; margin: 4px 6px; }
-  .chrome-bar .lang.active { background: #564b51; color: #fff; }
+  .chrome-bar button, .chrome-bar .lang { border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer; background: transparent; color: #cfc4ca; }
+  .chrome-bar button.active { background: #fff; color: #1e1828; font-weight: 600; }
+  .chrome-bar .sep { width: 1px; background: #564b61; margin: 4px 6px; }
+  .chrome-bar .lang.active { background: #564b61; color: #fff; }
   .chrome-spacer { height: 46px; }
-
   .switcher {
     position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 50;
     display: flex; align-items: center; gap: 14px;
-    background: #1e181c; color: #fff; border-radius: 999px;
+    background: #1e1828; color: #fff; border-radius: 999px;
     padding: 10px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.35);
-    font-size: 14px; user-select: none;
+    font-size: 14px; user-select: none; font-family: system-ui, sans-serif;
   }
-  .switcher button {
-    border: 0; background: #3a3137; color: #fff; cursor: pointer;
-    width: 34px; height: 34px; border-radius: 999px; font-size: 16px; line-height: 1;
-  }
-  .switcher .vname { min-width: 150px; text-align: center; }
+  .switcher button { border: 0; background: #38314a; color: #fff; cursor: pointer; width: 34px; height: 34px; border-radius: 999px; font-size: 16px; line-height: 1; }
+  .switcher .vname { min-width: 160px; text-align: center; }
   .switcher .vkey { font-weight: 700; margin-right: 6px; }
 
-  /* shared form atoms (variants restyle them) */
-  .field-label { display: block; font-size: 14px; margin: 18px 0 6px; }
-  .text-input {
-    width: 100%; padding: 12px 14px; border-radius: 12px;
-    border: 1.5px solid #d9ccd2; background: #fff; color: var(--ink);
+  /* ============ shared mystery atoms ============ */
+  .case-no { font-family: var(--mono); font-size: 13px; letter-spacing: .25em; color: var(--pine); text-transform: uppercase; }
+  .stamp {
+    display: inline-block; font-family: var(--mono); font-weight: 700; letter-spacing: .18em;
+    color: var(--love); border: 3px solid var(--love); border-radius: 4px;
+    padding: 8px 14px; text-transform: uppercase; transform: rotate(-6deg);
+    font-size: 14px; opacity: .85;
   }
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 700;
+    letter-spacing: .12em; background: var(--ink); color: var(--cream);
+    padding: 4px 10px; border-radius: 2px; text-transform: uppercase;
+  }
+  .tag.rose { background: var(--love); }
+  .tag.pine { background: var(--pine); }
+  .tag.foam { background: var(--blue); }
+
+  .video-exhibit { position: relative; max-width: 340px; margin: 0 auto; }
+  .video-exhibit .tag { position: absolute; top: -12px; left: -8px; transform: rotate(-4deg); z-index: 8; }
+
+  /* animated story (dark projection screen inside the cream page - rosé pine dark) */
+  .story { position: relative; max-width: 300px; margin: 0 auto; aspect-ratio: 9/16; background: #191724; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 44px rgba(30,25,45,.4); cursor: pointer; }
+  .story .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 26px; text-align: center; opacity: 0; transition: opacity .55s ease; }
+  .story .scene.on { opacity: 1; }
+  .story .st-big { font-family: var(--mono); font-weight: 700; font-size: 20px; color: #e0def4; line-height: 1.35; }
+  .story .st-acc { color: #eb6f92; }
+  .story .st-acc.foam { color: #9ccfd8; }
+  .story .st-small { font-family: var(--mono); font-size: 12.5px; color: #908caa; line-height: 1.5; }
+  .story .scene.photo { padding: 0; }
+  .story .scene.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .story .scene.photo.on img { animation: kb 3.6s ease-out forwards; }
+  @keyframes kb { from { transform: scale(1.02); } to { transform: scale(1.13); } }
+  .story .scrim { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 18px 46px; background: linear-gradient(transparent, rgba(15,13,25,.94) 42%); text-align: left; }
+  .story .wtag { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 11.5px; letter-spacing: .1em; background: #e0def4; color: #191724; padding: 3px 8px; border-radius: 2px; margin-bottom: 8px; }
+  .story .wsub { font-family: var(--mono); font-size: 12px; color: #e0def4; line-height: 1.45; }
+  .story .stamp2 { position: absolute; top: 20px; left: 50%; transform: translateX(-50%) rotate(-8deg); font-family: var(--mono); font-weight: 700; font-size: 12.5px; letter-spacing: .16em; color: #eb6f92; border: 2.5px solid #eb6f92; border-radius: 4px; padding: 5px 10px; white-space: nowrap; }
+  .story .dots { position: absolute; bottom: 13px; left: 0; right: 0; display: flex; gap: 6px; justify-content: center; z-index: 5; }
+  .story .dots i { width: 6px; height: 6px; border-radius: 50%; background: #6e6a86; transition: background .3s; }
+  .story .dots i.on { background: #eb6f92; }
+  .story .replay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(15,13,25,.55); z-index: 6; border: 0; cursor: pointer; }
+  .story .replay.show { display: flex; }
+  .story .replay span { font-family: var(--mono); font-weight: 700; color: #e0def4; border: 2px solid #e0def4; border-radius: 999px; padding: 10px 18px; font-size: 13px; letter-spacing: .1em; }
+
+  .witness { display: flex; gap: 14px; align-items: flex-start; background: var(--paper); border: 1px solid var(--overlay); border-radius: 8px; padding: 14px 16px; }
+  .witness .num { font-family: var(--mono); font-weight: 700; font-size: 22px; color: var(--rose); line-height: 1; }
+  .witness .role { font-weight: 700; font-size: 16px; }
+  .witness .desc { font-size: 14px; color: var(--ink-soft); margin-top: 3px; line-height: 1.45; }
+  .witness .chain { font-family: var(--mono); color: var(--love); font-size: 18px; text-align: center; margin: 4px 0; }
+  .code-chip { display: inline-block; font-family: var(--mono); font-size: 12px; background: var(--overlay); border-radius: 4px; padding: 2px 8px; margin-top: 6px; color: var(--ink); letter-spacing: .1em; }
+
+  .photo { overflow: hidden; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* form atoms */
+  .field-label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); margin: 20px 0 8px; }
+  .text-input { width: 100%; padding: 12px 14px; border-radius: 6px; border: 1.5px solid #d8d2cc; background: #fff; color: var(--ink); font-family: Georgia, serif; }
   .text-input:focus { outline: 2px solid var(--rose); border-color: transparent; }
   .help { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.4; }
   .attend-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
   .attend-opt input { position: absolute; opacity: 0; }
-  .attend-opt span {
-    display: block; text-align: center; padding: 14px 8px; border-radius: 14px;
-    border: 1.5px solid #d9ccd2; background: #fff; cursor: pointer; font-weight: 600;
-  }
+  .attend-opt span { display: block; text-align: center; padding: 14px 8px; border-radius: 8px; border: 1.5px solid #d8d2cc; background: #fff; cursor: pointer; font-weight: 700; }
   .attend-opt input:checked + span { border-color: var(--rose); background: var(--rose-faint); color: var(--love); }
   .attend-opt.no input:checked + span { border-color: var(--pine); background: var(--blue-faint); color: var(--pine); }
+  .theory-row .attend-opt span { font-family: var(--mono); letter-spacing: .06em; }
   .plusone { display: flex; align-items: center; gap: 10px; margin-top: 18px; cursor: pointer; font-size: 14px; }
   .plusone input { width: 18px; height: 18px; accent-color: var(--rose); }
   .plusone-name { margin-top: 10px; }
   .hidden { display: none; }
   .cta {
-    display: block; width: 100%; margin-top: 22px; padding: 15px;
-    border: 0; border-radius: 999px; cursor: pointer;
-    background: linear-gradient(90deg, var(--rose), var(--blue));
-    color: #fff; font-weight: 700; font-size: 16px; letter-spacing: .02em;
+    display: block; width: 100%; margin-top: 24px; padding: 15px; border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--ink); color: var(--cream); font-family: var(--mono); font-weight: 700;
+    font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
   }
-  .link-quiet {
-    display: block; text-align: center; margin-top: 14px;
-    color: var(--ink-soft); font-size: 13.5px; text-decoration: underline; cursor: pointer;
-    background: none; border: 0; width: 100%;
-  }
+  .link-quiet { display: block; text-align: center; margin-top: 14px; color: var(--ink-soft); font-size: 13.5px; text-decoration: underline; cursor: pointer; background: none; border: 0; width: 100%; }
 
-  .reveal-rows { margin-top: 18px; display: grid; gap: 14px; }
-  .reveal-row { display: flex; gap: 12px; align-items: flex-start; }
-  .reveal-ico {
-    flex: 0 0 38px; height: 38px; border-radius: 12px;
-    background: var(--rose-faint); display: flex; align-items: center; justify-content: center;
-  }
-  .reveal-ico::after { content: ""; width: 14px; height: 14px; border-radius: 4px; background: var(--rose); }
-  .reveal-row:nth-child(2) .reveal-ico { background: var(--blue-faint); }
-  .reveal-row:nth-child(2) .reveal-ico::after { background: var(--blue); border-radius: 50%; }
-  .reveal-row:nth-child(3) .reveal-ico::after { border-radius: 50% 50% 4px 4px; }
-  .reveal-k { font-size: 11.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-soft); }
-  .reveal-v { font-weight: 600; margin-top: 2px; }
+  .reveal-rows { margin-top: 18px; display: grid; gap: 0; }
+  .reveal-row { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px dashed var(--overlay); }
+  .reveal-k { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--pine); }
+  .reveal-v { font-weight: 700; margin-top: 3px; font-size: 16px; }
   .reveal-v a { color: var(--pine); }
+  .theory-note { margin-top: 16px; font-family: var(--mono); font-size: 13px; background: var(--rose-faint); border: 1px dashed var(--rose); border-radius: 6px; padding: 10px 12px; color: var(--love); }
 
-  /* ============ VARIANT A - Storybook ============ */
-  .vA { background: var(--cream); font-family: Georgia, "Times New Roman", serif; }
-  .vA .chrome-spacer { height: 46px; }
-  .vA .hero { position: relative; }
-  .vA .hero .photo { border-radius: 0; height: clamp(340px, 62vh, 580px); }
-  .vA .scallop { display: block; width: 100%; height: 26px; margin-top: -26px; position: relative; }
-  .vA .wrap { max-width: 460px; margin: 0 auto; padding: 10px 24px 120px; text-align: center; }
-  .vA .eyebrow {
-    font-size: 12px; letter-spacing: .35em; text-transform: uppercase; color: var(--rose);
-    margin: 18px 0 10px; font-family: system-ui, sans-serif;
+  /* ============ VARIANT A - The Dossier ============ */
+  .vA .wrap { max-width: 480px; margin: 0 auto; padding: 58px 22px 130px; }
+  .vA .dossier {
+    background: var(--paper); border: 1px solid var(--overlay); border-radius: 4px;
+    padding: 26px 22px 30px; position: relative;
+    box-shadow: 0 14px 40px rgba(87,82,121,.14);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 45px, #f4ece4 45px 46px);
   }
-  .vA h1 { font-size: 40px; line-height: 1.1; font-weight: 700; font-style: italic; color: var(--ink); }
-  .vA .sub { margin-top: 12px; font-size: 17px; color: var(--ink-soft); line-height: 1.55; }
-  .vA .ribbon {
-    margin: 26px auto 0; width: 120px; height: 6px; border-radius: 3px;
-    background: linear-gradient(90deg, var(--rose), var(--blue));
-  }
-  .vA .photostrip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 26px; }
-  .vA .photostrip .photo { height: 132px; border-radius: 999px 999px 12px 12px; }
-  .vA .teaser {
-    margin-top: 26px; padding: 14px 18px; border: 1.5px dashed var(--rose); border-radius: 16px;
-    color: var(--love); font-size: 14.5px; font-style: italic; background: rgba(255,255,255,.6);
-  }
-  .vA .card {
-    margin-top: 22px; background: #fff; border-radius: 22px; padding: 26px 22px;
-    box-shadow: 0 10px 40px rgba(232,140,165,.18); text-align: left;
-  }
-  .vA .state[data-state="rsvp"] .card, .vA .state[data-state="reveal"] .card { margin-top: 52px; }
-  .vA h2 { font-size: 26px; font-style: italic; text-align: center; }
-  .vA .dots { text-align: center; margin-top: 8px; color: var(--rose); letter-spacing: 6px; font-size: 10px; }
-  .vA .dots i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--rose); margin: 0 4px; }
-  .vA .dots i:nth-child(2) { background: var(--blue); }
+  .vA .dossier-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .vA h1 { font-size: 30px; line-height: 1.2; margin: 18px 0 8px; }
+  .vA .sub { font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+  .vA .sec { margin-top: 30px; }
+  .vA .sec-label { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .vA .sec-label::after { content: ""; flex: 1; height: 1px; background: var(--overlay); }
+  .vA .witnesses { display: grid; gap: 10px; }
+  .vA .twist { margin-top: 26px; text-align: center; font-size: 16px; line-height: 1.6; }
+  .vA .twist strong { color: var(--love); font-family: var(--mono); letter-spacing: .06em; }
+  .vA .exhibits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .vA .exhibit { background: #fff; padding: 6px 6px 20px; box-shadow: 0 5px 16px rgba(87,82,121,.18); border-radius: 2px; position: relative; }
+  .vA .exhibit:nth-child(1) { transform: rotate(-2deg); }
+  .vA .exhibit:nth-child(3) { transform: rotate(1.6deg); }
+  .vA .exhibit .photo { height: 100px; }
+  .vA .exhibit figcaption { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-align: center; margin-top: 6px; color: var(--ink-soft); text-transform: uppercase; }
+  .vA .teaser { margin-top: 26px; text-align: center; font-family: var(--mono); font-size: 13px; color: var(--pine); border: 1.5px dashed var(--pine); border-radius: 8px; padding: 12px 16px; background: var(--blue-faint); }
+  .vA h2 { font-size: 24px; text-align: center; margin-bottom: 4px; }
+  .vA .form-card { background: var(--paper); border: 1px solid var(--overlay); border-radius: 4px; padding: 24px 20px; box-shadow: 0 14px 40px rgba(87,82,121,.14); }
+  .vA .state[data-state="rsvp"] .form-card, .vA .state[data-state="reveal"] .form-card,
+  .vB .state[data-state="rsvp"] .form-card, .vB .state[data-state="reveal"] .form-card,
+  .vC .state[data-state="rsvp"] .form-card, .vC .state[data-state="reveal"] .reveal-card { margin-top: 30px; }
+  .vA .form-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 
-  /* ============ VARIANT B - Scrapbook ============ */
-  .vB {
-    background-color: var(--cream);
-    background-image: radial-gradient(#ecd0ca 1.6px, transparent 1.7px), radial-gradient(#c2dee2 1.6px, transparent 1.7px);
-    background-size: 34px 34px; background-position: 0 0, 17px 17px;
+  /* ============ VARIANT B - The Evidence Board ============ */
+  .vB { background-color: var(--cream); background-image: radial-gradient(#e8ddd3 1.5px, transparent 1.6px); background-size: 26px 26px; }
+  .vB .wrap { max-width: 480px; margin: 0 auto; padding: 58px 18px 130px; position: relative; }
+  .vB .board-head { text-align: center; margin-bottom: 18px; }
+  .vB h1 { font-size: 27px; line-height: 1.25; margin-top: 10px; }
+  .vB .board { position: relative; }
+  .vB .strings { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  .vB .strings path { stroke: var(--love); stroke-width: 1.6; fill: none; opacity: .9; }
+  .vB .pin { position: relative; z-index: 2; }
+  .vB .pin::before {
+    content: ""; position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
+    width: 14px; height: 14px; border-radius: 50%; background: var(--love);
+    box-shadow: 0 2px 4px rgba(0,0,0,.3); z-index: 3;
   }
-  .vB .wrap { max-width: 480px; margin: 0 auto; padding: 56px 18px 130px; }
-  .vB .board {
-    background: #fff; border-radius: 8px; padding: 22px 20px 28px;
-    box-shadow: 0 14px 40px rgba(61,50,55,.14); position: relative;
-    transform: rotate(-.4deg);
-  }
-  .vB .board::before, .vB .board::after {
-    content: ""; position: absolute; width: 88px; height: 26px; top: -12px;
-    background: rgba(122,168,221,.45); transform: rotate(-4deg); border-radius: 2px;
-  }
-  .vB .board::before { left: 18px; }
-  .vB .board::after { right: 18px; left: auto; background: rgba(232,140,165,.45); transform: rotate(5deg); }
-  .vB .polaroids { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-  .vB .polaroid { background: #fff; padding: 7px 7px 22px; box-shadow: 0 6px 18px rgba(61,50,55,.16); border-radius: 4px; }
-  .vB .polaroid:nth-child(1) { transform: rotate(-2.5deg); }
-  .vB .polaroid:nth-child(2) { transform: rotate(2deg); }
-  .vB .polaroid:nth-child(3) { transform: rotate(-1.2deg); }
-  .vB .polaroid .photo { height: 128px; border-radius: 2px; font-size: 11px; }
-  .vB .polaroids .polaroid:nth-child(3) { grid-column: 1 / -1; }
-  .vB .polaroids .polaroid:nth-child(3) .photo { height: 120px; }
-  .vB h1 {
-    font-family: ui-rounded, "Hiragino Maru Gothic ProN", "Segoe UI Rounded", system-ui, sans-serif;
-    font-size: 34px; text-align: center; line-height: 1.15; color: var(--love);
-  }
-  .vB .sub {
-    text-align: center; margin-top: 10px; color: var(--ink-soft); font-size: 15.5px; line-height: 1.5;
-    font-family: ui-rounded, system-ui, sans-serif;
-  }
-  .vB .washi {
-    height: 14px; margin: 18px -20px 0; transform: rotate(-.6deg);
-    background: repeating-linear-gradient(45deg, var(--rose-soft) 0 14px, var(--blue-soft) 14px 28px);
-    opacity: .8;
-  }
-  .vB .teaser {
-    margin-top: 18px; text-align: center; font-size: 14px; color: var(--pine);
-    background: var(--blue-faint); border-radius: 12px; padding: 12px 16px;
-    font-family: ui-rounded, system-ui, sans-serif;
-  }
-  .vB h2 {
-    font-family: ui-rounded, system-ui, sans-serif; font-size: 24px; color: var(--love); text-align: center;
-    margin-top: 4px;
-  }
-  .vB .text-input, .vB .attend-opt span { border-radius: 10px; border-width: 2px; border-color: #ecd3dd; }
-  .vB .cta { border-radius: 14px; transform: rotate(-.3deg); }
-  .vB .reveal-ico { border-radius: 8px; }
+  .vB .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 16px; margin-top: 20px; }
+  .vB .card-photo { background: #fff; padding: 7px 7px 24px; box-shadow: 0 8px 22px rgba(87,82,121,.22); border-radius: 2px; }
+  .vB .card-photo .photo { height: 130px; }
+  .vB .card-photo figcaption { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-align: center; margin-top: 7px; color: var(--ink-soft); text-transform: uppercase; }
+  .vB .tilt-l { transform: rotate(-2.4deg); }
+  .vB .tilt-r { transform: rotate(2deg); }
+  .vB .wcard { background: var(--paper); border: 1px solid var(--overlay); padding: 12px 14px; box-shadow: 0 8px 22px rgba(87,82,121,.18); border-radius: 2px; }
+  .vB .wcard .role { font-weight: 700; font-size: 15px; }
+  .vB .wcard .desc { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; line-height: 1.4; }
+  .vB .video-pin { grid-column: 1 / -1; margin: 6px auto 0; width: min(78%, 300px); }
+  .vB .twist-card { grid-column: 1 / -1; text-align: center; background: var(--paper); border: 1px dashed var(--love); border-radius: 4px; padding: 16px; font-size: 15px; line-height: 1.55; }
+  .vB .twist-card strong { color: var(--love); font-family: var(--mono); }
+  .vB .cta-card { grid-column: 1 / -1; background: var(--paper); border: 1px solid var(--overlay); padding: 18px; box-shadow: 0 8px 22px rgba(87,82,121,.18); }
+  .vB .teaser { text-align: center; font-family: var(--mono); font-size: 12.5px; color: var(--pine); margin-bottom: 12px; }
+  .vB h2 { font-size: 23px; text-align: center; }
+  .vB .form-card { background: var(--paper); border: 1px solid var(--overlay); padding: 22px 20px; box-shadow: 0 8px 22px rgba(87,82,121,.18); position: relative; z-index: 2; }
 
-  /* ============ VARIANT C - Editorial ============ */
-  .vC { background: #fbfaf8; }
-  .vC .layout { max-width: 980px; margin: 0 auto; padding: 0 28px 130px; }
-  .vC .state[data-state="rsvp"] .layout, .vC .state[data-state="reveal"] .layout { padding-top: 44px; }
-  .vC .rail { display: none; }
-  .vC .label {
-    font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--ink-soft);
-    display: flex; align-items: center; gap: 12px; margin: 26px 0 14px;
+  /* ============ VARIANT C - The Sealed Envelope ============ */
+  .vC .stage { max-width: 480px; margin: 0 auto; padding: 58px 22px 130px; }
+  .vC .envelope-zone { position: relative; height: 560px; }
+  .vC .letter {
+    position: absolute; left: 0; right: 0; top: 26px; background: var(--paper);
+    border: 1px solid var(--overlay); border-radius: 4px; padding: 26px 20px;
+    box-shadow: 0 14px 40px rgba(87,82,121,.16); text-align: center;
+    transition: transform .8s cubic-bezier(.2,.7,.3,1); transform: translateY(0);
   }
-  .vC .label::after { content: ""; flex: 1; height: 1px; background: #e3ded9; }
-  .vC h1 { font-size: clamp(38px, 6vw, 60px); font-weight: 300; letter-spacing: -.02em; line-height: 1.04; }
-  .vC h1 em { font-style: italic; font-family: Georgia, serif; background: linear-gradient(90deg, var(--rose), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .vC .sub { margin-top: 16px; font-size: 16px; color: var(--ink-soft); max-width: 46ch; line-height: 1.6; }
-  .vC .mobile-photos { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 26px; }
-  .vC .mobile-photos .photo { height: 150px; border-radius: 4px; }
-  .vC .mobile-photos .photo:last-child { height: 150px; }
-  .vC .teaser { margin-top: 26px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--love); border-left: 3px solid var(--rose); padding-left: 14px; }
-  .vC h2 { font-weight: 300; font-size: 30px; letter-spacing: -.01em; }
-  .vC .text-input { border-radius: 4px; border-color: #d8d2cc; }
-  .vC .attend-opt span { border-radius: 4px; border-color: #d8d2cc; font-weight: 500; }
-  .vC .cta { border-radius: 4px; background: var(--ink); }
-  .vC .photo { border-radius: 4px; }
-  .vC .reveal-rows { border-top: 1px solid #e3ded9; }
-  .vC .reveal-row { padding: 16px 0; border-bottom: 1px solid #e3ded9; }
-  .vC .reveal-ico { background: #f3efe9; border-radius: 4px; }
-  @media (min-width: 760px) {
-    .vC .layout { display: grid; grid-template-columns: 340px 1fr; gap: 48px; }
-    .vC .rail { display: grid; gap: 14px; align-content: start; position: sticky; top: 70px; }
-    .vC .rail .photo { height: 190px; }
-    .vC .mobile-photos { display: none; }
+  .vC .envelope {
+    position: absolute; left: -6px; right: -6px; bottom: 0; height: 470px;
+    transition: opacity .5s .35s;
   }
+  .vC .env-back { position: absolute; inset: 0; background: #e9dfd4; border-radius: 6px; box-shadow: 0 18px 50px rgba(87,82,121,.25); }
+  .vC .env-front {
+    position: absolute; inset: 0; border-radius: 6px;
+    clip-path: polygon(0 0, 50% 42%, 100% 0, 100% 100%, 0 100%);
+    background-color: #ddd0bf;
+  }
+  .vC .env-flap {
+    position: absolute; left: 0; right: 0; top: 0; height: 52%;
+    background: #d4c6b2; clip-path: polygon(0 0, 100% 0, 50% 92%);
+    transform-origin: top; transition: transform .6s ease; border-radius: 6px 6px 0 0;
+  }
+  .vC .env-stamp { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; z-index: 4; }
+  .vC .env-open-btn { margin-top: 18px; }
+  .vC.opened .env-flap { transform: rotateX(180deg); }
+  .vC.opened .letter { transform: translateY(-30px); position: relative; top: 0; }
+  .vC.opened .envelope-zone { height: auto; }
+  .vC.opened .env-open-btn { display: none; }
+  .vC h1 { font-size: 26px; line-height: 1.25; margin: 14px 0 8px; }
+  .vC .sub { font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; }
+  .vC .after-open { margin-top: 26px; display: none; }
+  .vC.opened .after-open { display: block; }
+  .vC .after-open > * { opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; }
+  .vC.opened .after-open > * { opacity: 1; transform: none; }
+  .vC.opened .after-open > *:nth-child(1) { transition-delay: .45s; }
+  .vC.opened .after-open > *:nth-child(2) { transition-delay: .62s; }
+  .vC.opened .after-open > *:nth-child(3) { transition-delay: .79s; }
+  .vC.opened .after-open > *:nth-child(4) { transition-delay: .96s; }
+  .vC.opened .after-open > *:nth-child(5) { transition-delay: 1.13s; }
+  .vC.opened .after-open > *:nth-child(6) { transition-delay: 1.3s; }
+  .vC.opened .envelope { opacity: 0; pointer-events: none; transform: translateY(50px); }
+  .vC .envelope { transition: opacity .5s .3s, transform .5s .3s; }
+  .vC .witnesses { display: grid; gap: 10px; margin-top: 16px; }
+  .vC .form-card, .vC .reveal-card { background: var(--paper); border: 1px solid var(--overlay); border-radius: 4px; padding: 24px 20px; box-shadow: 0 14px 40px rgba(87,82,121,.14); }
+  .vC h2 { font-size: 24px; text-align: center; }
 
   @media (max-width: 420px) {
-    .switcher .vname { min-width: 110px; font-size: 12.5px; }
+    .switcher .vname { min-width: 120px; font-size: 12.5px; }
   }
 </style>
 </head>
 <body>
 
-<!-- prototype chrome: state tabs + language (not part of the designs) -->
 <div class="chrome-bar">
   <button type="button" data-goto-state="landing">Landing</button>
   <button type="button" data-goto-state="rsvp">RSVP</button>
@@ -269,7 +284,7 @@
 </div>
 <div class="chrome-spacer"></div>
 
-<!-- ================= VARIANT A - Storybook ================= -->
+<!-- ================= VARIANT A - The Dossier ================= -->
 <section class="variant vA" data-variant="A">
   <div class="lang-fab">
     <button type="button" class="lang" data-lang="es">ES</button>
@@ -277,32 +292,80 @@
   </div>
 
   <div class="state" data-state="landing">
-    <div class="hero">
-      <div class="photo"><img src="photos/hero-primary.jpg" alt="Los futuros papás sentados en el parque" style="object-position:50% 68%"></div>
-      <svg class="scallop" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0,10 Q5,0 10,10 T20,10 T30,10 T40,10 T50,10 T60,10 T70,10 T80,10 T90,10 T100,10 V10 H0 Z" fill="#faf4ed"/></svg>
-    </div>
     <div class="wrap">
-      <div class="eyebrow" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
-      <h1 data-i18n="invite_title">¡Estás invitado!</h1>
-      <p class="sub" data-i18n="invite_body">Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.</p>
-      <div class="ribbon"></div>
-      <div class="photostrip">
-        <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
-        <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
-        <div class="photo"><img src="photos/primary-detail.jpg" alt="Los futuros papás bajo el árbol" style="object-position:50% 30%"></div>
+      <div class="dossier">
+        <div class="dossier-head">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="stamp" data-i18n="confidential">Confidencial</span>
+        </div>
+        <div class="video-exhibit">
+          <span class="tag rose" data-i18n="video_k">Prueba videográfica</span>
+          <div class="story" data-story>
+            <div class="scene on"><div class="st-big" data-i18n="st1">SE RUMORA...</div></div>
+            <div class="scene">
+              <div class="st-big" data-i18n="st2a">que solo</div>
+              <div class="st-big st-acc" data-i18n="st2b">TRES PERSONAS</div>
+              <div class="st-big" data-i18n="st2c">en todo el mundo conocen el sexo de nuestro bebé.</div>
+            </div>
+            <div class="scene photo">
+              <img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 35%">
+              <div class="stamp2" data-i18n="secret">SECRETO</div>
+              <div class="scrim"><span class="wtag" data-i18n="sw1t">TESTIGO N.º 1</span><div class="wsub" data-i18n="sw1s">El doctor: descubrió el secreto y lo selló en un sobre.</div></div>
+            </div>
+            <div class="scene photo">
+              <img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%">
+              <div class="stamp2" data-i18n="coded">EN CLAVE</div>
+              <div class="scrim"><span class="wtag" data-i18n="sw2t">TESTIGO N.º 2</span><div class="wsub" data-i18n="sw2s">La tienda de globos: leyó el sobre y eligió el color del confeti.</div></div>
+            </div>
+            <div class="scene photo">
+              <img src="photos/hero-primary.jpg" alt="Los futuros papás en el parque" style="object-position:50% 62%">
+              <div class="stamp2" data-i18n="secret">SECRETO</div>
+              <div class="scrim"><span class="wtag" data-i18n="sw3t">TESTIGO N.º 3</span><div class="wsub" data-i18n="sw3s">La pastelería: recibió el código y eligió el relleno del pastel.</div></div>
+            </div>
+            <div class="scene"><div class="st-big" data-i18n="st6a">Los futuros papás</div><div class="st-big st-acc foam" data-i18n="st6b">NO LO SABEN</div></div>
+            <div class="scene"><div class="st-big" data-i18n="st7a">Y si un invitado lo supiera...</div><div class="st-big st-acc" data-i18n="st7b">TODOS LO SABRÍAN</div></div>
+            <div class="scene"><div class="st-big" data-i18n="st8a">¿Niña o niño?</div><div class="st-small" data-i18n="st8s">Ayúdanos a resolver el misterio.</div></div>
+            <div class="scene"><div class="st-big" data-i18n="st9a">La revelación: en la fiesta.</div><div class="st-small" data-i18n="st9s">La fecha y el lugar se revelan al confirmar tu asistencia.</div></div>
+            <div class="dots"></div>
+            <button class="replay" type="button"><span data-i18n="replay">Ver de nuevo</span></button>
+          </div>
+        </div>
+        <h1 data-i18n="rumor_head">Se rumora que solo tres personas conocen el sexo del bebé</h1>
+        <p class="sub" data-i18n="rumor_sub">Y ninguna de ellas somos nosotros. Esto es lo que sabemos del caso.</p>
+        <div class="sec">
+          <div class="sec-label"><span class="tag pine" data-i18n="witnesses_k">Los testigos</span></div>
+          <div class="witnesses">
+            <div class="witness"><span class="num">1</span><div><div class="role" data-i18n="w1_role">El doctor</div><div class="desc" data-i18n="w1_desc">Descubrió el secreto y lo selló en un sobre.</div></div></div>
+            <div class="chain">&darr;</div>
+            <div class="witness"><span class="num">2</span><div><div class="role" data-i18n="w2_role">La tienda de globos</div><div class="desc" data-i18n="w2_desc">Leyó el sobre y eligió el color del confeti.</div><span class="code-chip" data-i18n="code_chip">en clave: &#x25AE;&#x25AE;-&#x25AE;&#x25AE;&#x25AE;</span></div></div>
+            <div class="chain">&darr;</div>
+            <div class="witness"><span class="num">3</span><div><div class="role" data-i18n="w3_role">La pastelería</div><div class="desc" data-i18n="w3_desc">Descifró el código y eligió el relleno del pastel.</div></div></div>
+          </div>
+        </div>
+        <p class="twist"><span data-i18n="twist_a">Los futuros papás</span> <strong data-i18n="twist_b">NO LO SABEN</strong><br><span data-i18n="twist_c">Y si un invitado lo supiera... todos lo sabrían.</span></p>
+        <div class="sec">
+          <div class="sec-label"><span class="tag foam" data-i18n="exhibit_k">Pruebas</span></div>
+          <div class="exhibits">
+            <figure class="exhibit"><div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div><figcaption>A</figcaption></figure>
+            <figure class="exhibit"><div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div><figcaption>B</figcaption></figure>
+            <figure class="exhibit"><div class="photo"><img src="photos/primary-detail.jpg" alt="Los futuros papás bajo el árbol" style="object-position:50% 30%"></div><figcaption>C</figcaption></figure>
+          </div>
+        </div>
+        <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
+        <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
+        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
       </div>
-      <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
-      <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
-      <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
     </div>
   </div>
 
   <div class="state" data-state="rsvp">
     <div class="wrap">
-      <div class="eyebrow" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
-      <div class="card">
+      <div class="form-card">
+        <div class="form-head">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="tag" data-i18n="guest_file">Expediente de invitado</span>
+        </div>
         <h2 data-i18n="form_title">Confirma tu asistencia</h2>
-        <div class="dots"><i></i><i></i><i></i></div>
         <form data-fake-submit>
           <label class="field-label" data-i18n="name_label">Tu nombre</label>
           <input class="text-input" type="text" data-i18n-ph="name_ph" placeholder="María García">
@@ -311,6 +374,11 @@
           <div class="attend-row">
             <label class="attend-opt"><input type="radio" name="att-a" checked><span data-i18n="yes">Sí, ahí estaré</span></label>
             <label class="attend-opt no"><input type="radio" name="att-a"><span data-i18n="no">No podré</span></label>
+          </div>
+          <label class="field-label" data-i18n="theory_label">Tu teoría (opcional)</label>
+          <div class="attend-row theory-row">
+            <label class="attend-opt"><input type="radio" name="theory-a"><span data-i18n="girl">Niña</span></label>
+            <label class="attend-opt no"><input type="radio" name="theory-a"><span data-i18n="boy">Niño</span></label>
           </div>
           <label class="plusone"><input type="checkbox" data-plusone-toggle><span data-i18n="plusone">¿Vienes con alguien?</span></label>
           <div class="plusone-name hidden">
@@ -325,24 +393,18 @@
 
   <div class="state" data-state="reveal">
     <div class="wrap">
-      <div class="eyebrow" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
-      <div class="card">
-        <h2 data-i18n="reveal_title">¡Nos vemos pronto!</h2>
-        <div class="dots"><i></i><i></i><i></i></div>
-        <div class="reveal-rows">
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="venue_k">Lugar</div><div class="reveal-v">Casa de los Abuelos</div></div>
-          </div>
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div>
-          </div>
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div>
-          </div>
+      <div class="form-card">
+        <div class="form-head">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="tag pine" data-i18n="case_status">Caso abierto</span>
         </div>
+        <h2 data-i18n="reveal_title">El caso se revela en la fiesta</h2>
+        <div class="reveal-rows">
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="venue_k">La escena</div><div class="reveal-v">Casa de los Abuelos</div></div></div>
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div></div>
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div></div>
+        </div>
+        <div class="theory-note"><span data-i18n="your_theory">Tu teoría registrada:</span> <strong data-i18n="theory_girl">Niña</strong></div>
         <button type="button" class="cta" data-i18n="map">Abrir en Google Maps</button>
         <button type="button" class="link-quiet" data-goto-state="rsvp" data-i18n="change">Cambiar mi RSVP</button>
       </div>
@@ -350,7 +412,7 @@
   </div>
 </section>
 
-<!-- ================= VARIANT B - Scrapbook ================= -->
+<!-- ================= VARIANT B - The Evidence Board ================= -->
 <section class="variant vB" data-variant="B">
   <div class="lang-fab">
     <button type="button" class="lang" data-lang="es">ES</button>
@@ -359,25 +421,73 @@
 
   <div class="state" data-state="landing">
     <div class="wrap">
+      <div class="board-head">
+        <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+        <h1 data-i18n="rumor_head">Se rumora que solo tres personas conocen el sexo del bebé</h1>
+      </div>
       <div class="board">
-        <div class="polaroids">
-          <div class="polaroid"><div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div></div>
-          <div class="polaroid"><div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div></div>
-          <div class="polaroid"><div class="photo"><img src="photos/hero-primary.jpg" alt="Los futuros papás sentados en el parque" style="object-position:50% 68%"></div></div>
+        <svg class="strings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M26,2 L50,30 M74,2 L50,30 M26,62 L50,30 M74,62 L50,30" vector-effect="non-scaling-stroke"></path>
+        </svg>
+        <div class="grid">
+          <figure class="pin card-photo tilt-l"><div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div><figcaption data-i18n="ex_a">Prueba A</figcaption></figure>
+          <figure class="pin card-photo tilt-r"><div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div><figcaption data-i18n="ex_b">Prueba B</figcaption></figure>
+          <div class="pin video-pin">
+            <div class="video-exhibit">
+              <span class="tag rose" data-i18n="video_k">Prueba videográfica</span>
+              <div class="story" data-story>
+                <div class="scene on"><div class="st-big" data-i18n="st1">SE RUMORA...</div></div>
+                <div class="scene">
+                  <div class="st-big" data-i18n="st2a">que solo</div>
+                  <div class="st-big st-acc" data-i18n="st2b">TRES PERSONAS</div>
+                  <div class="st-big" data-i18n="st2c">en todo el mundo conocen el sexo de nuestro bebé.</div>
+                </div>
+                <div class="scene photo">
+                  <img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 35%">
+                  <div class="stamp2" data-i18n="secret">SECRETO</div>
+                  <div class="scrim"><span class="wtag" data-i18n="sw1t">TESTIGO N.º 1</span><div class="wsub" data-i18n="sw1s">El doctor: descubrió el secreto y lo selló en un sobre.</div></div>
+                </div>
+                <div class="scene photo">
+                  <img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%">
+                  <div class="stamp2" data-i18n="coded">EN CLAVE</div>
+                  <div class="scrim"><span class="wtag" data-i18n="sw2t">TESTIGO N.º 2</span><div class="wsub" data-i18n="sw2s">La tienda de globos: leyó el sobre y eligió el color del confeti.</div></div>
+                </div>
+                <div class="scene photo">
+                  <img src="photos/hero-primary.jpg" alt="Los futuros papás en el parque" style="object-position:50% 62%">
+                  <div class="stamp2" data-i18n="secret">SECRETO</div>
+                  <div class="scrim"><span class="wtag" data-i18n="sw3t">TESTIGO N.º 3</span><div class="wsub" data-i18n="sw3s">La pastelería: recibió el código y eligió el relleno del pastel.</div></div>
+                </div>
+                <div class="scene"><div class="st-big" data-i18n="st6a">Los futuros papás</div><div class="st-big st-acc foam" data-i18n="st6b">NO LO SABEN</div></div>
+                <div class="scene"><div class="st-big" data-i18n="st7a">Y si un invitado lo supiera...</div><div class="st-big st-acc" data-i18n="st7b">TODOS LO SABRÍAN</div></div>
+                <div class="scene"><div class="st-big" data-i18n="st8a">¿Niña o niño?</div><div class="st-small" data-i18n="st8s">Ayúdanos a resolver el misterio.</div></div>
+                <div class="scene"><div class="st-big" data-i18n="st9a">La revelación: en la fiesta.</div><div class="st-small" data-i18n="st9s">La fecha y el lugar se revelan al confirmar tu asistencia.</div></div>
+                <div class="dots"></div>
+                <button class="replay" type="button"><span data-i18n="replay">Ver de nuevo</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="pin wcard tilt-l"><div class="role">1. <span data-i18n="w1_role">El doctor</span></div><div class="desc" data-i18n="w1_desc">Descubrió el secreto y lo selló en un sobre.</div></div>
+          <div class="pin wcard tilt-r"><div class="role">2. <span data-i18n="w2_role">La tienda de globos</span></div><div class="desc" data-i18n="w2_desc">Leyó el sobre y eligió el color del confeti.</div></div>
+          <div class="pin wcard tilt-l"><div class="role">3. <span data-i18n="w3_role">La pastelería</span></div><div class="desc" data-i18n="w3_desc">Descifró el código y eligió el relleno del pastel.</div></div>
+          <div class="pin wcard tilt-r"><div class="role" data-i18n="w4_role">Los papás</div><div class="desc"><strong style="color:var(--love);font-family:var(--mono)" data-i18n="twist_b">NO LO SABEN</strong></div></div>
+          <div class="pin twist-card"><span data-i18n="twist_c">Y si un invitado lo supiera... todos lo sabrían.</span></div>
+          <div class="pin cta-card">
+            <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
+            <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
+            <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+          </div>
         </div>
-        <h1 data-i18n="invite_title">¡Estás invitado!</h1>
-        <p class="sub" data-i18n="invite_body">Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.</p>
-        <div class="washi"></div>
-        <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
-        <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
-        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
       </div>
     </div>
   </div>
 
   <div class="state" data-state="rsvp">
     <div class="wrap">
-      <div class="board">
+      <div class="form-card pin">
+        <div class="form-head">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="tag" data-i18n="guest_file">Expediente de invitado</span>
+        </div>
         <h2 data-i18n="form_title">Confirma tu asistencia</h2>
         <form data-fake-submit>
           <label class="field-label" data-i18n="name_label">Tu nombre</label>
@@ -388,6 +498,11 @@
             <label class="attend-opt"><input type="radio" name="att-b" checked><span data-i18n="yes">Sí, ahí estaré</span></label>
             <label class="attend-opt no"><input type="radio" name="att-b"><span data-i18n="no">No podré</span></label>
           </div>
+          <label class="field-label" data-i18n="theory_label">Tu teoría (opcional)</label>
+          <div class="attend-row theory-row">
+            <label class="attend-opt"><input type="radio" name="theory-b"><span data-i18n="girl">Niña</span></label>
+            <label class="attend-opt no"><input type="radio" name="theory-b"><span data-i18n="boy">Niño</span></label>
+          </div>
           <label class="plusone"><input type="checkbox" data-plusone-toggle><span data-i18n="plusone">¿Vienes con alguien?</span></label>
           <div class="plusone-name hidden">
             <input class="text-input" type="text" data-i18n-ph="plusone_ph" placeholder="Nombre de tu acompañante (opcional)">
@@ -401,22 +516,18 @@
 
   <div class="state" data-state="reveal">
     <div class="wrap">
-      <div class="board">
-        <h2 data-i18n="reveal_title">¡Nos vemos pronto!</h2>
-        <div class="reveal-rows">
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="venue_k">Lugar</div><div class="reveal-v">Casa de los Abuelos</div></div>
-          </div>
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div>
-          </div>
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div>
-          </div>
+      <div class="form-card pin">
+        <div class="form-head">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="tag pine" data-i18n="case_status">Caso abierto</span>
         </div>
+        <h2 data-i18n="reveal_title">El caso se revela en la fiesta</h2>
+        <div class="reveal-rows">
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="venue_k">La escena</div><div class="reveal-v">Casa de los Abuelos</div></div></div>
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div></div>
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div></div>
+        </div>
+        <div class="theory-note"><span data-i18n="your_theory">Tu teoría registrada:</span> <strong data-i18n="theory_girl">Niña</strong></div>
         <button type="button" class="cta" data-i18n="map">Abrir en Google Maps</button>
         <button type="button" class="link-quiet" data-goto-state="rsvp" data-i18n="change">Cambiar mi RSVP</button>
       </div>
@@ -424,7 +535,7 @@
   </div>
 </section>
 
-<!-- ================= VARIANT C - Editorial ================= -->
+<!-- ================= VARIANT C - The Sealed Envelope ================= -->
 <section class="variant vC" data-variant="C">
   <div class="lang-fab">
     <button type="button" class="lang" data-lang="es">ES</button>
@@ -432,21 +543,61 @@
   </div>
 
   <div class="state" data-state="landing">
-    <div class="layout">
-      <div class="rail">
-        <div class="photo"><img src="photos/hero-primary.jpg" alt="Los futuros papás sentados en el parque" style="object-position:50% 68%"></div>
-        <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
-        <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
-      </div>
-      <div>
-        <div class="label" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
-        <h1><span data-i18n="c_title_a">Una tarde</span> <em data-i18n="c_title_b">dulce</em> <span data-i18n="c_title_c">está por llegar</span></h1>
-        <p class="sub" data-i18n="invite_body">Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.</p>
-        <div class="mobile-photos">
-          <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
-          <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
+    <div class="stage">
+      <div class="envelope-zone">
+        <div class="letter">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <h1 data-i18n="rumor_head">Se rumora que solo tres personas conocen el sexo del bebé</h1>
+          <p class="sub" data-i18n="rumor_sub">Y ninguna de ellas somos nosotros. Esto es lo que sabemos del caso.</p>
         </div>
-        <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
+        <div class="envelope">
+          <div class="env-back"></div>
+          <div class="env-front"></div>
+          <div class="env-flap"></div>
+          <div class="env-stamp"><span class="stamp" data-i18n="confidential">Confidencial</span></div>
+        </div>
+      </div>
+      <button type="button" class="cta env-open-btn" data-env-open data-i18n="env_open">Abrir el expediente</button>
+      <div class="after-open">
+        <div class="video-exhibit" style="margin-top:24px">
+          <span class="tag rose" data-i18n="video_k">Prueba videográfica</span>
+          <div class="story" data-story data-story-lazy>
+            <div class="scene on"><div class="st-big" data-i18n="st1">SE RUMORA...</div></div>
+            <div class="scene">
+              <div class="st-big" data-i18n="st2a">que solo</div>
+              <div class="st-big st-acc" data-i18n="st2b">TRES PERSONAS</div>
+              <div class="st-big" data-i18n="st2c">en todo el mundo conocen el sexo de nuestro bebé.</div>
+            </div>
+            <div class="scene photo">
+              <img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 35%">
+              <div class="stamp2" data-i18n="secret">SECRETO</div>
+              <div class="scrim"><span class="wtag" data-i18n="sw1t">TESTIGO N.º 1</span><div class="wsub" data-i18n="sw1s">El doctor: descubrió el secreto y lo selló en un sobre.</div></div>
+            </div>
+            <div class="scene photo">
+              <img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%">
+              <div class="stamp2" data-i18n="coded">EN CLAVE</div>
+              <div class="scrim"><span class="wtag" data-i18n="sw2t">TESTIGO N.º 2</span><div class="wsub" data-i18n="sw2s">La tienda de globos: leyó el sobre y eligió el color del confeti.</div></div>
+            </div>
+            <div class="scene photo">
+              <img src="photos/hero-primary.jpg" alt="Los futuros papás en el parque" style="object-position:50% 62%">
+              <div class="stamp2" data-i18n="secret">SECRETO</div>
+              <div class="scrim"><span class="wtag" data-i18n="sw3t">TESTIGO N.º 3</span><div class="wsub" data-i18n="sw3s">La pastelería: recibió el código y eligió el relleno del pastel.</div></div>
+            </div>
+            <div class="scene"><div class="st-big" data-i18n="st6a">Los futuros papás</div><div class="st-big st-acc foam" data-i18n="st6b">NO LO SABEN</div></div>
+            <div class="scene"><div class="st-big" data-i18n="st7a">Y si un invitado lo supiera...</div><div class="st-big st-acc" data-i18n="st7b">TODOS LO SABRÍAN</div></div>
+            <div class="scene"><div class="st-big" data-i18n="st8a">¿Niña o niño?</div><div class="st-small" data-i18n="st8s">Ayúdanos a resolver el misterio.</div></div>
+            <div class="scene"><div class="st-big" data-i18n="st9a">La revelación: en la fiesta.</div><div class="st-small" data-i18n="st9s">La fecha y el lugar se revelan al confirmar tu asistencia.</div></div>
+            <div class="dots"></div>
+            <button class="replay" type="button"><span data-i18n="replay">Ver de nuevo</span></button>
+          </div>
+        </div>
+        <div class="witnesses">
+          <div class="witness"><span class="num">1</span><div><div class="role" data-i18n="w1_role">El doctor</div><div class="desc" data-i18n="w1_desc">Descubrió el secreto y lo selló en un sobre.</div></div></div>
+          <div class="witness"><span class="num">2</span><div><div class="role" data-i18n="w2_role">La tienda de globos</div><div class="desc" data-i18n="w2_desc">Leyó el sobre y eligió el color del confeti.</div><span class="code-chip" data-i18n="code_chip">en clave: &#x25AE;&#x25AE;-&#x25AE;&#x25AE;&#x25AE;</span></div></div>
+          <div class="witness"><span class="num">3</span><div><div class="role" data-i18n="w3_role">La pastelería</div><div class="desc" data-i18n="w3_desc">Descifró el código y eligió el relleno del pastel.</div></div></div>
+        </div>
+        <p class="twist" style="margin-top:22px;text-align:center;font-size:16px;line-height:1.6"><span data-i18n="twist_a">Los futuros papás</span> <strong style="color:var(--love);font-family:var(--mono)" data-i18n="twist_b">NO LO SABEN</strong></p>
+        <div class="teaser" style="margin-top:20px;text-align:center;font-family:var(--mono);font-size:13px;color:var(--pine);border:1.5px dashed var(--pine);border-radius:8px;padding:12px 16px;background:var(--blue-faint)" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
         <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
         <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
       </div>
@@ -454,12 +605,12 @@
   </div>
 
   <div class="state" data-state="rsvp">
-    <div class="layout">
-      <div class="rail">
-        <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
-      </div>
-      <div>
-        <div class="label" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+    <div class="stage">
+      <div class="form-card">
+        <div class="form-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="tag" data-i18n="guest_file">Expediente de invitado</span>
+        </div>
         <h2 data-i18n="form_title">Confirma tu asistencia</h2>
         <form data-fake-submit>
           <label class="field-label" data-i18n="name_label">Tu nombre</label>
@@ -469,6 +620,11 @@
           <div class="attend-row">
             <label class="attend-opt"><input type="radio" name="att-c" checked><span data-i18n="yes">Sí, ahí estaré</span></label>
             <label class="attend-opt no"><input type="radio" name="att-c"><span data-i18n="no">No podré</span></label>
+          </div>
+          <label class="field-label" data-i18n="theory_label">Tu teoría (opcional)</label>
+          <div class="attend-row theory-row">
+            <label class="attend-opt"><input type="radio" name="theory-c"><span data-i18n="girl">Niña</span></label>
+            <label class="attend-opt no"><input type="radio" name="theory-c"><span data-i18n="boy">Niño</span></label>
           </div>
           <label class="plusone"><input type="checkbox" data-plusone-toggle><span data-i18n="plusone">¿Vienes con alguien?</span></label>
           <div class="plusone-name hidden">
@@ -482,27 +638,19 @@
   </div>
 
   <div class="state" data-state="reveal">
-    <div class="layout">
-      <div class="rail">
-        <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
-      </div>
-      <div>
-        <div class="label" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
-        <h2 data-i18n="reveal_title">¡Nos vemos pronto!</h2>
-        <div class="reveal-rows">
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="venue_k">Lugar</div><div class="reveal-v">Casa de los Abuelos</div></div>
-          </div>
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div>
-          </div>
-          <div class="reveal-row">
-            <div class="reveal-ico"></div>
-            <div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div>
-          </div>
+    <div class="stage">
+      <div class="reveal-card">
+        <div class="form-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="case-no" data-i18n="case_no">Caso N.º 2026</span>
+          <span class="tag pine" data-i18n="case_status">Caso abierto</span>
         </div>
+        <h2 data-i18n="reveal_title">El caso se revela en la fiesta</h2>
+        <div class="reveal-rows">
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="venue_k">La escena</div><div class="reveal-v">Casa de los Abuelos</div></div></div>
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div></div>
+          <div class="reveal-row"><div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div></div>
+        </div>
+        <div class="theory-note"><span data-i18n="your_theory">Tu teoría registrada:</span> <strong data-i18n="theory_girl">Niña</strong></div>
         <button type="button" class="cta" data-i18n="map">Abrir en Google Maps</button>
         <button type="button" class="link-quiet" data-goto-state="rsvp" data-i18n="change">Cambiar mi RSVP</button>
       </div>
@@ -510,26 +658,45 @@
   </div>
 </section>
 
-<!-- variant switcher (prototype chrome) -->
 <div class="switcher">
   <button type="button" data-cycle="-1" aria-label="previous variant">&larr;</button>
-  <span class="vname"><span class="vkey" id="vkey">A</span><span id="vlabel">Storybook</span></span>
+  <span class="vname"><span class="vkey" id="vkey">A</span><span id="vlabel">Dossier</span></span>
   <button type="button" data-cycle="1" aria-label="next variant">&rarr;</button>
 </div>
 
 <script>
 (function () {
-  var VARIANTS = { A: "Storybook", B: "Scrapbook", C: "Editorial" };
+  var VARIANTS = { A: "Dossier", B: "Evidence Board", C: "The Envelope" };
   var ORDER = ["A", "B", "C"];
 
   var I18N = {
     es: {
-      eyebrow: "Baby Shower & Gender Reveal",
-      invite_title: "¡Estás invitado!",
-      invite_body: "Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.",
+      case_no: "Caso N.º 2026",
+      confidential: "Confidencial",
+      video_k: "Prueba videográfica",
+      rumor_head: "Se rumora que solo tres personas conocen el sexo del bebé",
+      rumor_sub: "Y ninguna de ellas somos nosotros. Esto es lo que sabemos del caso.",
+      witnesses_k: "Los testigos",
+      w1_role: "El doctor",
+      w1_desc: "Descubrió el secreto y lo selló en un sobre.",
+      w2_role: "La tienda de globos",
+      w2_desc: "Leyó el sobre y eligió el color del confeti.",
+      w3_role: "La pastelería",
+      w3_desc: "Descifró el código y eligió el relleno del pastel.",
+      w4_role: "Los papás",
+      code_chip: "en clave: ▮▮-▮▮▮",
+      twist_a: "Los futuros papás",
+      twist_b: "NO LO SABEN",
+      twist_c: "Y si un invitado lo supiera... todos lo sabrían.",
+      exhibit_k: "Pruebas",
+      ex_a: "Prueba A",
+      ex_b: "Prueba B",
       teaser: "La fecha y el lugar se revelan al confirmar tu asistencia",
       cta: "Confirmar asistencia",
       already: "¿Ya confirmaste?",
+      env_open: "Abrir el expediente",
+      guest_file: "Expediente de invitado",
+      case_status: "Caso abierto",
       form_title: "Confirma tu asistencia",
       name_label: "Tu nombre",
       name_ph: "María García",
@@ -537,25 +704,70 @@
       attending_label: "¿Asistirás?",
       yes: "Sí, ahí estaré",
       no: "No podré",
+      theory_label: "Tu teoría (opcional)",
+      girl: "Niña",
+      boy: "Niño",
       plusone: "¿Vienes con alguien?",
       plusone_ph: "Nombre de tu acompañante (opcional)",
       submit: "Confirmar",
-      reveal_title: "¡Nos vemos pronto!",
-      venue_k: "Lugar",
+      reveal_title: "El caso se revela en la fiesta",
+      venue_k: "La escena",
       addr_k: "Dirección",
       date_k: "Fecha y hora",
       date_v: "Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM",
+      your_theory: "Tu teoría registrada:",
+      theory_girl: "Niña",
       map: "Abrir en Google Maps",
       change: "Cambiar mi RSVP",
-      c_title_a: "Una tarde", c_title_b: "dulce", c_title_c: "está por llegar"
+      st1: "SE RUMORA...",
+      st2a: "que solo",
+      st2b: "TRES PERSONAS",
+      st2c: "en todo el mundo conocen el sexo de nuestro bebé.",
+      sw1t: "TESTIGO N.º 1",
+      sw1s: "El doctor: descubrió el secreto y lo selló en un sobre.",
+      sw2t: "TESTIGO N.º 2",
+      sw2s: "La tienda de globos: leyó el sobre y eligió el color del confeti.",
+      sw3t: "TESTIGO N.º 3",
+      sw3s: "La pastelería: recibió el código y eligió el relleno del pastel.",
+      st6a: "Los futuros papás",
+      st6b: "NO LO SABEN",
+      st7a: "Y si un invitado lo supiera...",
+      st7b: "TODOS LO SABRÍAN",
+      st8a: "¿Niña o niño?",
+      st8s: "Ayúdanos a resolver el misterio.",
+      st9a: "La revelación: en la fiesta.",
+      st9s: "La fecha y el lugar se revelan al confirmar tu asistencia.",
+      secret: "SECRETO",
+      coded: "EN CLAVE",
+      replay: "Ver de nuevo"
     },
     en: {
-      eyebrow: "Baby Shower & Gender Reveal",
-      invite_title: "You're invited!",
-      invite_body: "Join us to celebrate the arrival of our baby. It will be a sweet afternoon with family.",
+      case_no: "Case #2026",
+      confidential: "Confidential",
+      video_k: "Video evidence",
+      rumor_head: "Rumor has it only three people know the baby's sex",
+      rumor_sub: "And neither of them is us. Here's what we know about the case.",
+      witnesses_k: "The witnesses",
+      w1_role: "The doctor",
+      w1_desc: "Discovered the secret and sealed it in an envelope.",
+      w2_role: "The balloon store",
+      w2_desc: "Read the envelope and chose the confetti color.",
+      w3_role: "The cake shop",
+      w3_desc: "Decoded it and chose the cake filling.",
+      w4_role: "The parents",
+      code_chip: "coded: ▮▮-▮▮▮",
+      twist_a: "The parents-to-be",
+      twist_b: "DO NOT KNOW",
+      twist_c: "And if even one guest knew... everyone would know.",
+      exhibit_k: "Exhibits",
+      ex_a: "Exhibit A",
+      ex_b: "Exhibit B",
       teaser: "Date and place are revealed once you RSVP",
       cta: "RSVP",
       already: "Already confirmed?",
+      env_open: "Open the case file",
+      guest_file: "Guest file",
+      case_status: "Open case",
       form_title: "Confirm your attendance",
       name_label: "Your name",
       name_ph: "Mary Smith",
@@ -563,17 +775,42 @@
       attending_label: "Will you attend?",
       yes: "Yes, I'll be there",
       no: "Can't make it",
+      theory_label: "Your theory (optional)",
+      girl: "Girl",
+      boy: "Boy",
       plusone: "Bringing someone with you?",
       plusone_ph: "Your +1's name (optional)",
       submit: "Confirm",
-      reveal_title: "See you soon!",
-      venue_k: "Venue",
+      reveal_title: "The case breaks at the party",
+      venue_k: "The scene",
       addr_k: "Address",
       date_k: "Date & time",
       date_v: "Saturday, September 12, 2026 · 3:00 - 7:00 PM",
+      your_theory: "Your theory on file:",
+      theory_girl: "Girl",
       map: "Open in Google Maps",
       change: "Change my RSVP",
-      c_title_a: "Something", c_title_b: "sweet", c_title_c: "is on the way"
+      st1: "RUMOR HAS IT...",
+      st2a: "that only",
+      st2b: "THREE PEOPLE",
+      st2c: "in the whole world know the sex of our baby.",
+      sw1t: "WITNESS #1",
+      sw1s: "The doctor: discovered the secret and sealed it in an envelope.",
+      sw2t: "WITNESS #2",
+      sw2s: "The balloon store: read the envelope and chose the confetti color.",
+      sw3t: "WITNESS #3",
+      sw3s: "The cake shop: received the code and chose the cake filling.",
+      st6a: "The parents-to-be",
+      st6b: "DO NOT KNOW",
+      st7a: "And if even one guest knew...",
+      st7b: "EVERYONE WOULD KNOW",
+      st8a: "Girl or boy?",
+      st8s: "Help us solve the mystery.",
+      st9a: "The reveal: at the party.",
+      st9s: "Date and place are revealed when you RSVP.",
+      secret: "SECRET",
+      coded: "CODED",
+      replay: "Watch again"
     }
   };
 
@@ -618,9 +855,53 @@
     });
   }
 
+  document.querySelectorAll("[data-story]").forEach(function (story) {
+    var scenes = story.querySelectorAll(".scene");
+    var dotsBox = story.querySelector(".dots");
+    var replay = story.querySelector(".replay");
+    var idx = 0, timer = null, i, d;
+    for (i = 0; i < scenes.length; i++) {
+      d = document.createElement("i");
+      if (i === 0) d.className = "on";
+      dotsBox.appendChild(d);
+    }
+    var dots = dotsBox.children;
+    function show(n) {
+      scenes[idx].classList.remove("on"); dots[idx].classList.remove("on");
+      idx = n;
+      scenes[idx].classList.add("on"); dots[idx].classList.add("on");
+    }
+    function tick() {
+      if (idx < scenes.length - 1) { show(idx + 1); }
+      else { stop(); replay.classList.add("show"); }
+    }
+    function start() { if (!timer) timer = setInterval(tick, 2600); }
+    function stop() { clearInterval(timer); timer = null; }
+    story._story = { start: start, reset: function () { stop(); replay.classList.remove("show"); show(0); } };
+    story.addEventListener("click", function (e) {
+      if (e.target.closest(".replay") || replay.classList.contains("show")) return;
+      if (timer) { stop(); } else { start(); }
+    });
+    replay.addEventListener("click", function (e) {
+      e.stopPropagation();
+      replay.classList.remove("show");
+      show(0); start();
+    });
+    if (!story.hasAttribute("data-story-lazy")) start();
+  });
+
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-goto-state], [data-cycle], .lang");
+    var t = e.target.closest("[data-goto-state], [data-cycle], .lang, [data-env-open]");
     if (!t) return;
+    var v;
+    if (t.hasAttribute("data-env-open")) {
+      v = t.closest(".variant");
+      v.classList.add("opened");
+      v.querySelectorAll("[data-story-lazy]").forEach(function (s) {
+        if (s._story) { s._story.reset(); s._story.start(); }
+      });
+      return;
+    }
     var cur = params();
     var i;
     if (t.dataset.gotoState) { cur.state = t.dataset.gotoState; write(cur); return; }

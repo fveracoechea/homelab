@@ -39,3 +39,19 @@ _Avoid_: dashboard, backoffice
 **Headcount**:
 The sum of party sizes over attending RSVPs - the number the hosts report to the venue. Declined RSVPs never count.
 _Avoid_: total guests, attendance figure
+
+**The Mystery**:
+The invitation's conceit: only three people in the world know the baby's sex, and the parents-to-be are not among them. Guests are asked to help solve it. The page is styled as a case file; the reveal happens live at the party (balloon + cake).
+_Avoid_: theme, gimmick
+
+**Witness**:
+One of the three people who know the secret: the doctor (discovered it, sealed it in the Secret Envelope), the balloon store (chose the confetti color), the cake shop (chose the cake filling). Never the parents.
+_Avoid_: suspect, informant
+
+**Secret Envelope**:
+The sealed message carrying the secret from the doctor to the balloon store, then passed in code to the cake shop. Also the invitation's opening motif: a sealed envelope the guest opens.
+_Avoid_: letter, note
+
+**Theory**:
+A guest's optional girl/boy guess filed with their RSVP. Tallied in the Admin view. Not required; a guest may file no theory.
+_Avoid_: vote, prediction, bet
