@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE - THROWAWAY. Not production code.
+  Question: visual direction for the baby-shower/gender-reveal invitation (ticket #4).
+  Three structurally different variants x three guest states, switchable via URL params:
+    ?variant=A|B|C   (A Storybook, B Scrapbook, C Editorial)
+    &state=landing|rsvp|reveal
+    &lang=es|en
+  Run: open this file in a browser, or `python3 -m http.server` in this directory.
+  Copy is placeholder (real copy is ticket #5). Photos are gradient placeholders;
+  their count/placement per variant IS the design decision (photo slots).
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE - Visual direction: baby shower invitation</title>
+<style>
+  /* ============ shared tokens ============ */
+  :root {
+    /* Rosé Pine Dawn - pink (rose/love), green (pine), blue (foam) */
+    --rose: #d7827e;
+    --rose-soft: #ecc5c0;
+    --rose-faint: #f9ece9;
+    --love: #b4637a;
+    --blue: #56949f;
+    --blue-soft: #c2dee2;
+    --blue-faint: #edf5f5;
+    --pine: #286983;
+    --cream: #faf4ed;
+    --ink: #575279;
+    --ink-soft: #797593;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
+  img { display: block; }
+  button, input { font: inherit; }
+
+  .variant { display: none; min-height: 100vh; position: relative; }
+  .variant.active { display: block; }
+  .state { display: none; }
+  .state.active { display: block; }
+
+  /* in-design language toggle (part of every design - bilingual is pinned) */
+  .lang-fab {
+    position: absolute; top: 58px; right: 14px; z-index: 20;
+    display: flex; background: rgba(255,255,255,.85); backdrop-filter: blur(3px);
+    border-radius: 999px; padding: 3px; box-shadow: 0 2px 10px rgba(61,50,55,.15);
+  }
+  .lang-fab .lang {
+    border: 0; background: transparent; padding: 5px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; color: var(--ink-soft); cursor: pointer;
+  }
+  .lang-fab .lang.active { background: var(--ink); color: #fff; }
+
+  /* photo slots - real assets, object-fit cover; position tuned per photo */
+  .photo { overflow: hidden; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* ============ prototype chrome (NOT part of the designs) ============ */
+  .chrome-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: center; gap: 4px;
+    padding: 8px; background: rgba(30,24,28,.92); backdrop-filter: blur(4px);
+    font-size: 13px;
+  }
+  .chrome-bar button, .chrome-bar .lang {
+    border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer;
+    background: transparent; color: #cfc4ca;
+  }
+  .chrome-bar button.active { background: #fff; color: #1e181c; font-weight: 600; }
+  .chrome-bar .sep { width: 1px; background: #564b51; margin: 4px 6px; }
+  .chrome-bar .lang.active { background: #564b51; color: #fff; }
+  .chrome-spacer { height: 46px; }
+
+  .switcher {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 50;
+    display: flex; align-items: center; gap: 14px;
+    background: #1e181c; color: #fff; border-radius: 999px;
+    padding: 10px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.35);
+    font-size: 14px; user-select: none;
+  }
+  .switcher button {
+    border: 0; background: #3a3137; color: #fff; cursor: pointer;
+    width: 34px; height: 34px; border-radius: 999px; font-size: 16px; line-height: 1;
+  }
+  .switcher .vname { min-width: 150px; text-align: center; }
+  .switcher .vkey { font-weight: 700; margin-right: 6px; }
+
+  /* shared form atoms (variants restyle them) */
+  .field-label { display: block; font-size: 14px; margin: 18px 0 6px; }
+  .text-input {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    border: 1.5px solid #d9ccd2; background: #fff; color: var(--ink);
+  }
+  .text-input:focus { outline: 2px solid var(--rose); border-color: transparent; }
+  .help { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.4; }
+  .attend-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .attend-opt input { position: absolute; opacity: 0; }
+  .attend-opt span {
+    display: block; text-align: center; padding: 14px 8px; border-radius: 14px;
+    border: 1.5px solid #d9ccd2; background: #fff; cursor: pointer; font-weight: 600;
+  }
+  .attend-opt input:checked + span { border-color: var(--rose); background: var(--rose-faint); color: var(--love); }
+  .attend-opt.no input:checked + span { border-color: var(--pine); background: var(--blue-faint); color: var(--pine); }
+  .plusone { display: flex; align-items: center; gap: 10px; margin-top: 18px; cursor: pointer; font-size: 14px; }
+  .plusone input { width: 18px; height: 18px; accent-color: var(--rose); }
+  .plusone-name { margin-top: 10px; }
+  .hidden { display: none; }
+  .cta {
+    display: block; width: 100%; margin-top: 22px; padding: 15px;
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(90deg, var(--rose), var(--blue));
+    color: #fff; font-weight: 700; font-size: 16px; letter-spacing: .02em;
+  }
+  .link-quiet {
+    display: block; text-align: center; margin-top: 14px;
+    color: var(--ink-soft); font-size: 13.5px; text-decoration: underline; cursor: pointer;
+    background: none; border: 0; width: 100%;
+  }
+
+  .reveal-rows { margin-top: 18px; display: grid; gap: 14px; }
+  .reveal-row { display: flex; gap: 12px; align-items: flex-start; }
+  .reveal-ico {
+    flex: 0 0 38px; height: 38px; border-radius: 12px;
+    background: var(--rose-faint); display: flex; align-items: center; justify-content: center;
+  }
+  .reveal-ico::after { content: ""; width: 14px; height: 14px; border-radius: 4px; background: var(--rose); }
+  .reveal-row:nth-child(2) .reveal-ico { background: var(--blue-faint); }
+  .reveal-row:nth-child(2) .reveal-ico::after { background: var(--blue); border-radius: 50%; }
+  .reveal-row:nth-child(3) .reveal-ico::after { border-radius: 50% 50% 4px 4px; }
+  .reveal-k { font-size: 11.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-soft); }
+  .reveal-v { font-weight: 600; margin-top: 2px; }
+  .reveal-v a { color: var(--pine); }
+
+  /* ============ VARIANT A - Storybook ============ */
+  .vA { background: var(--cream); font-family: Georgia, "Times New Roman", serif; }
+  .vA .chrome-spacer { height: 46px; }
+  .vA .hero { position: relative; }
+  .vA .hero .photo { border-radius: 0; height: clamp(340px, 62vh, 580px); }
+  .vA .scallop { display: block; width: 100%; height: 26px; margin-top: -26px; position: relative; }
+  .vA .wrap { max-width: 460px; margin: 0 auto; padding: 10px 24px 120px; text-align: center; }
+  .vA .eyebrow {
+    font-size: 12px; letter-spacing: .35em; text-transform: uppercase; color: var(--rose);
+    margin: 18px 0 10px; font-family: system-ui, sans-serif;
+  }
+  .vA h1 { font-size: 40px; line-height: 1.1; font-weight: 700; font-style: italic; color: var(--ink); }
+  .vA .sub { margin-top: 12px; font-size: 17px; color: var(--ink-soft); line-height: 1.55; }
+  .vA .ribbon {
+    margin: 26px auto 0; width: 120px; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--rose), var(--blue));
+  }
+  .vA .photostrip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 26px; }
+  .vA .photostrip .photo { height: 132px; border-radius: 999px 999px 12px 12px; }
+  .vA .teaser {
+    margin-top: 26px; padding: 14px 18px; border: 1.5px dashed var(--rose); border-radius: 16px;
+    color: var(--love); font-size: 14.5px; font-style: italic; background: rgba(255,255,255,.6);
+  }
+  .vA .card {
+    margin-top: 22px; background: #fff; border-radius: 22px; padding: 26px 22px;
+    box-shadow: 0 10px 40px rgba(232,140,165,.18); text-align: left;
+  }
+  .vA .state[data-state="rsvp"] .card, .vA .state[data-state="reveal"] .card { margin-top: 52px; }
+  .vA h2 { font-size: 26px; font-style: italic; text-align: center; }
+  .vA .dots { text-align: center; margin-top: 8px; color: var(--rose); letter-spacing: 6px; font-size: 10px; }
+  .vA .dots i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--rose); margin: 0 4px; }
+  .vA .dots i:nth-child(2) { background: var(--blue); }
+
+  /* ============ VARIANT B - Scrapbook ============ */
+  .vB {
+    background-color: var(--cream);
+    background-image: radial-gradient(#ecd0ca 1.6px, transparent 1.7px), radial-gradient(#c2dee2 1.6px, transparent 1.7px);
+    background-size: 34px 34px; background-position: 0 0, 17px 17px;
+  }
+  .vB .wrap { max-width: 480px; margin: 0 auto; padding: 56px 18px 130px; }
+  .vB .board {
+    background: #fff; border-radius: 8px; padding: 22px 20px 28px;
+    box-shadow: 0 14px 40px rgba(61,50,55,.14); position: relative;
+    transform: rotate(-.4deg);
+  }
+  .vB .board::before, .vB .board::after {
+    content: ""; position: absolute; width: 88px; height: 26px; top: -12px;
+    background: rgba(122,168,221,.45); transform: rotate(-4deg); border-radius: 2px;
+  }
+  .vB .board::before { left: 18px; }
+  .vB .board::after { right: 18px; left: auto; background: rgba(232,140,165,.45); transform: rotate(5deg); }
+  .vB .polaroids { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .vB .polaroid { background: #fff; padding: 7px 7px 22px; box-shadow: 0 6px 18px rgba(61,50,55,.16); border-radius: 4px; }
+  .vB .polaroid:nth-child(1) { transform: rotate(-2.5deg); }
+  .vB .polaroid:nth-child(2) { transform: rotate(2deg); }
+  .vB .polaroid:nth-child(3) { transform: rotate(-1.2deg); }
+  .vB .polaroid .photo { height: 128px; border-radius: 2px; font-size: 11px; }
+  .vB .polaroids .polaroid:nth-child(3) { grid-column: 1 / -1; }
+  .vB .polaroids .polaroid:nth-child(3) .photo { height: 120px; }
+  .vB h1 {
+    font-family: ui-rounded, "Hiragino Maru Gothic ProN", "Segoe UI Rounded", system-ui, sans-serif;
+    font-size: 34px; text-align: center; line-height: 1.15; color: var(--love);
+  }
+  .vB .sub {
+    text-align: center; margin-top: 10px; color: var(--ink-soft); font-size: 15.5px; line-height: 1.5;
+    font-family: ui-rounded, system-ui, sans-serif;
+  }
+  .vB .washi {
+    height: 14px; margin: 18px -20px 0; transform: rotate(-.6deg);
+    background: repeating-linear-gradient(45deg, var(--rose-soft) 0 14px, var(--blue-soft) 14px 28px);
+    opacity: .8;
+  }
+  .vB .teaser {
+    margin-top: 18px; text-align: center; font-size: 14px; color: var(--pine);
+    background: var(--blue-faint); border-radius: 12px; padding: 12px 16px;
+    font-family: ui-rounded, system-ui, sans-serif;
+  }
+  .vB h2 {
+    font-family: ui-rounded, system-ui, sans-serif; font-size: 24px; color: var(--love); text-align: center;
+    margin-top: 4px;
+  }
+  .vB .text-input, .vB .attend-opt span { border-radius: 10px; border-width: 2px; border-color: #ecd3dd; }
+  .vB .cta { border-radius: 14px; transform: rotate(-.3deg); }
+  .vB .reveal-ico { border-radius: 8px; }
+
+  /* ============ VARIANT C - Editorial ============ */
+  .vC { background: #fbfaf8; }
+  .vC .layout { max-width: 980px; margin: 0 auto; padding: 0 28px 130px; }
+  .vC .state[data-state="rsvp"] .layout, .vC .state[data-state="reveal"] .layout { padding-top: 44px; }
+  .vC .rail { display: none; }
+  .vC .label {
+    font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--ink-soft);
+    display: flex; align-items: center; gap: 12px; margin: 26px 0 14px;
+  }
+  .vC .label::after { content: ""; flex: 1; height: 1px; background: #e3ded9; }
+  .vC h1 { font-size: clamp(38px, 6vw, 60px); font-weight: 300; letter-spacing: -.02em; line-height: 1.04; }
+  .vC h1 em { font-style: italic; font-family: Georgia, serif; background: linear-gradient(90deg, var(--rose), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .vC .sub { margin-top: 16px; font-size: 16px; color: var(--ink-soft); max-width: 46ch; line-height: 1.6; }
+  .vC .mobile-photos { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 26px; }
+  .vC .mobile-photos .photo { height: 150px; border-radius: 4px; }
+  .vC .mobile-photos .photo:last-child { height: 150px; }
+  .vC .teaser { margin-top: 26px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--love); border-left: 3px solid var(--rose); padding-left: 14px; }
+  .vC h2 { font-weight: 300; font-size: 30px; letter-spacing: -.01em; }
+  .vC .text-input { border-radius: 4px; border-color: #d8d2cc; }
+  .vC .attend-opt span { border-radius: 4px; border-color: #d8d2cc; font-weight: 500; }
+  .vC .cta { border-radius: 4px; background: var(--ink); }
+  .vC .photo { border-radius: 4px; }
+  .vC .reveal-rows { border-top: 1px solid #e3ded9; }
+  .vC .reveal-row { padding: 16px 0; border-bottom: 1px solid #e3ded9; }
+  .vC .reveal-ico { background: #f3efe9; border-radius: 4px; }
+  @media (min-width: 760px) {
+    .vC .layout { display: grid; grid-template-columns: 340px 1fr; gap: 48px; }
+    .vC .rail { display: grid; gap: 14px; align-content: start; position: sticky; top: 70px; }
+    .vC .rail .photo { height: 190px; }
+    .vC .mobile-photos { display: none; }
+  }
+
+  @media (max-width: 420px) {
+    .switcher .vname { min-width: 110px; font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- prototype chrome: state tabs + language (not part of the designs) -->
+<div class="chrome-bar">
+  <button type="button" data-goto-state="landing">Landing</button>
+  <button type="button" data-goto-state="rsvp">RSVP</button>
+  <button type="button" data-goto-state="reveal">Reveal</button>
+  <span class="sep"></span>
+  <button type="button" class="lang" data-lang="es">ES</button>
+  <button type="button" class="lang" data-lang="en">EN</button>
+</div>
+<div class="chrome-spacer"></div>
+
+<!-- ================= VARIANT A - Storybook ================= -->
+<section class="variant vA" data-variant="A">
+  <div class="lang-fab">
+    <button type="button" class="lang" data-lang="es">ES</button>
+    <button type="button" class="lang" data-lang="en">EN</button>
+  </div>
+
+  <div class="state" data-state="landing">
+    <div class="hero">
+      <div class="photo"><img src="photos/hero-primary.jpg" alt="Los futuros papás sentados en el parque" style="object-position:50% 68%"></div>
+      <svg class="scallop" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0,10 Q5,0 10,10 T20,10 T30,10 T40,10 T50,10 T60,10 T70,10 T80,10 T90,10 T100,10 V10 H0 Z" fill="#faf4ed"/></svg>
+    </div>
+    <div class="wrap">
+      <div class="eyebrow" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+      <h1 data-i18n="invite_title">¡Estás invitado!</h1>
+      <p class="sub" data-i18n="invite_body">Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.</p>
+      <div class="ribbon"></div>
+      <div class="photostrip">
+        <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
+        <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
+        <div class="photo"><img src="photos/primary-detail.jpg" alt="Los futuros papás bajo el árbol" style="object-position:50% 30%"></div>
+      </div>
+      <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
+      <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
+      <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+    </div>
+  </div>
+
+  <div class="state" data-state="rsvp">
+    <div class="wrap">
+      <div class="eyebrow" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+      <div class="card">
+        <h2 data-i18n="form_title">Confirma tu asistencia</h2>
+        <div class="dots"><i></i><i></i><i></i></div>
+        <form data-fake-submit>
+          <label class="field-label" data-i18n="name_label">Tu nombre</label>
+          <input class="text-input" type="text" data-i18n-ph="name_ph" placeholder="María García">
+          <p class="help" data-i18n="name_help">Si tu nombre es común, agrega algo que te distinga (ej. María G. - Tía).</p>
+          <label class="field-label" data-i18n="attending_label">¿Asistirás?</label>
+          <div class="attend-row">
+            <label class="attend-opt"><input type="radio" name="att-a" checked><span data-i18n="yes">Sí, ahí estaré</span></label>
+            <label class="attend-opt no"><input type="radio" name="att-a"><span data-i18n="no">No podré</span></label>
+          </div>
+          <label class="plusone"><input type="checkbox" data-plusone-toggle><span data-i18n="plusone">¿Vienes con alguien?</span></label>
+          <div class="plusone-name hidden">
+            <input class="text-input" type="text" data-i18n-ph="plusone_ph" placeholder="Nombre de tu acompañante (opcional)">
+          </div>
+          <button class="cta" type="submit" data-i18n="submit">Confirmar</button>
+        </form>
+        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="state" data-state="reveal">
+    <div class="wrap">
+      <div class="eyebrow" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+      <div class="card">
+        <h2 data-i18n="reveal_title">¡Nos vemos pronto!</h2>
+        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="reveal-rows">
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="venue_k">Lugar</div><div class="reveal-v">Casa de los Abuelos</div></div>
+          </div>
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div>
+          </div>
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div>
+          </div>
+        </div>
+        <button type="button" class="cta" data-i18n="map">Abrir en Google Maps</button>
+        <button type="button" class="link-quiet" data-goto-state="rsvp" data-i18n="change">Cambiar mi RSVP</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VARIANT B - Scrapbook ================= -->
+<section class="variant vB" data-variant="B">
+  <div class="lang-fab">
+    <button type="button" class="lang" data-lang="es">ES</button>
+    <button type="button" class="lang" data-lang="en">EN</button>
+  </div>
+
+  <div class="state" data-state="landing">
+    <div class="wrap">
+      <div class="board">
+        <div class="polaroids">
+          <div class="polaroid"><div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div></div>
+          <div class="polaroid"><div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div></div>
+          <div class="polaroid"><div class="photo"><img src="photos/hero-primary.jpg" alt="Los futuros papás sentados en el parque" style="object-position:50% 68%"></div></div>
+        </div>
+        <h1 data-i18n="invite_title">¡Estás invitado!</h1>
+        <p class="sub" data-i18n="invite_body">Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.</p>
+        <div class="washi"></div>
+        <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
+        <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
+        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="state" data-state="rsvp">
+    <div class="wrap">
+      <div class="board">
+        <h2 data-i18n="form_title">Confirma tu asistencia</h2>
+        <form data-fake-submit>
+          <label class="field-label" data-i18n="name_label">Tu nombre</label>
+          <input class="text-input" type="text" data-i18n-ph="name_ph" placeholder="María García">
+          <p class="help" data-i18n="name_help">Si tu nombre es común, agrega algo que te distinga (ej. María G. - Tía).</p>
+          <label class="field-label" data-i18n="attending_label">¿Asistirás?</label>
+          <div class="attend-row">
+            <label class="attend-opt"><input type="radio" name="att-b" checked><span data-i18n="yes">Sí, ahí estaré</span></label>
+            <label class="attend-opt no"><input type="radio" name="att-b"><span data-i18n="no">No podré</span></label>
+          </div>
+          <label class="plusone"><input type="checkbox" data-plusone-toggle><span data-i18n="plusone">¿Vienes con alguien?</span></label>
+          <div class="plusone-name hidden">
+            <input class="text-input" type="text" data-i18n-ph="plusone_ph" placeholder="Nombre de tu acompañante (opcional)">
+          </div>
+          <button class="cta" type="submit" data-i18n="submit">Confirmar</button>
+        </form>
+        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="state" data-state="reveal">
+    <div class="wrap">
+      <div class="board">
+        <h2 data-i18n="reveal_title">¡Nos vemos pronto!</h2>
+        <div class="reveal-rows">
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="venue_k">Lugar</div><div class="reveal-v">Casa de los Abuelos</div></div>
+          </div>
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div>
+          </div>
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div>
+          </div>
+        </div>
+        <button type="button" class="cta" data-i18n="map">Abrir en Google Maps</button>
+        <button type="button" class="link-quiet" data-goto-state="rsvp" data-i18n="change">Cambiar mi RSVP</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VARIANT C - Editorial ================= -->
+<section class="variant vC" data-variant="C">
+  <div class="lang-fab">
+    <button type="button" class="lang" data-lang="es">ES</button>
+    <button type="button" class="lang" data-lang="en">EN</button>
+  </div>
+
+  <div class="state" data-state="landing">
+    <div class="layout">
+      <div class="rail">
+        <div class="photo"><img src="photos/hero-primary.jpg" alt="Los futuros papás sentados en el parque" style="object-position:50% 68%"></div>
+        <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
+        <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
+      </div>
+      <div>
+        <div class="label" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+        <h1><span data-i18n="c_title_a">Una tarde</span> <em data-i18n="c_title_b">dulce</em> <span data-i18n="c_title_c">está por llegar</span></h1>
+        <p class="sub" data-i18n="invite_body">Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.</p>
+        <div class="mobile-photos">
+          <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
+          <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
+        </div>
+        <div class="teaser" data-i18n="teaser">La fecha y el lugar se revelan al confirmar tu asistencia</div>
+        <button type="button" class="cta" data-goto-state="rsvp" data-i18n="cta">Confirmar asistencia</button>
+        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="state" data-state="rsvp">
+    <div class="layout">
+      <div class="rail">
+        <div class="photo"><img src="photos/ultrasound.jpg" alt="Primera ecografía del bebé" style="object-position:50% 45%"></div>
+      </div>
+      <div>
+        <div class="label" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+        <h2 data-i18n="form_title">Confirma tu asistencia</h2>
+        <form data-fake-submit>
+          <label class="field-label" data-i18n="name_label">Tu nombre</label>
+          <input class="text-input" type="text" data-i18n-ph="name_ph" placeholder="María García">
+          <p class="help" data-i18n="name_help">Si tu nombre es común, agrega algo que te distinga (ej. María G. - Tía).</p>
+          <label class="field-label" data-i18n="attending_label">¿Asistirás?</label>
+          <div class="attend-row">
+            <label class="attend-opt"><input type="radio" name="att-c" checked><span data-i18n="yes">Sí, ahí estaré</span></label>
+            <label class="attend-opt no"><input type="radio" name="att-c"><span data-i18n="no">No podré</span></label>
+          </div>
+          <label class="plusone"><input type="checkbox" data-plusone-toggle><span data-i18n="plusone">¿Vienes con alguien?</span></label>
+          <div class="plusone-name hidden">
+            <input class="text-input" type="text" data-i18n-ph="plusone_ph" placeholder="Nombre de tu acompañante (opcional)">
+          </div>
+          <button class="cta" type="submit" data-i18n="submit">Confirmar</button>
+        </form>
+        <button type="button" class="link-quiet" data-goto-state="reveal" data-i18n="already">¿Ya confirmaste?</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="state" data-state="reveal">
+    <div class="layout">
+      <div class="rail">
+        <div class="photo"><img src="photos/secondary.jpg" alt="Los futuros papás abrazados" style="object-position:62% 30%"></div>
+      </div>
+      <div>
+        <div class="label" data-i18n="eyebrow">Baby Shower &amp; Gender Reveal</div>
+        <h2 data-i18n="reveal_title">¡Nos vemos pronto!</h2>
+        <div class="reveal-rows">
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="venue_k">Lugar</div><div class="reveal-v">Casa de los Abuelos</div></div>
+          </div>
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="addr_k">Dirección</div><div class="reveal-v"><a href="#">Calle Falsa 123, Springfield</a></div></div>
+          </div>
+          <div class="reveal-row">
+            <div class="reveal-ico"></div>
+            <div><div class="reveal-k" data-i18n="date_k">Fecha y hora</div><div class="reveal-v" data-i18n="date_v">Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM</div></div>
+          </div>
+        </div>
+        <button type="button" class="cta" data-i18n="map">Abrir en Google Maps</button>
+        <button type="button" class="link-quiet" data-goto-state="rsvp" data-i18n="change">Cambiar mi RSVP</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- variant switcher (prototype chrome) -->
+<div class="switcher">
+  <button type="button" data-cycle="-1" aria-label="previous variant">&larr;</button>
+  <span class="vname"><span class="vkey" id="vkey">A</span><span id="vlabel">Storybook</span></span>
+  <button type="button" data-cycle="1" aria-label="next variant">&rarr;</button>
+</div>
+
+<script>
+(function () {
+  var VARIANTS = { A: "Storybook", B: "Scrapbook", C: "Editorial" };
+  var ORDER = ["A", "B", "C"];
+
+  var I18N = {
+    es: {
+      eyebrow: "Baby Shower & Gender Reveal",
+      invite_title: "¡Estás invitado!",
+      invite_body: "Acompáñanos a celebrar la llegada de nuestro bebé. Será una tarde dulce en familia.",
+      teaser: "La fecha y el lugar se revelan al confirmar tu asistencia",
+      cta: "Confirmar asistencia",
+      already: "¿Ya confirmaste?",
+      form_title: "Confirma tu asistencia",
+      name_label: "Tu nombre",
+      name_ph: "María García",
+      name_help: "Si tu nombre es común, agrega algo que te distinga (ej. María G. - Tía).",
+      attending_label: "¿Asistirás?",
+      yes: "Sí, ahí estaré",
+      no: "No podré",
+      plusone: "¿Vienes con alguien?",
+      plusone_ph: "Nombre de tu acompañante (opcional)",
+      submit: "Confirmar",
+      reveal_title: "¡Nos vemos pronto!",
+      venue_k: "Lugar",
+      addr_k: "Dirección",
+      date_k: "Fecha y hora",
+      date_v: "Sábado 12 de septiembre de 2026 · 3:00 - 7:00 PM",
+      map: "Abrir en Google Maps",
+      change: "Cambiar mi RSVP",
+      c_title_a: "Una tarde", c_title_b: "dulce", c_title_c: "está por llegar"
+    },
+    en: {
+      eyebrow: "Baby Shower & Gender Reveal",
+      invite_title: "You're invited!",
+      invite_body: "Join us to celebrate the arrival of our baby. It will be a sweet afternoon with family.",
+      teaser: "Date and place are revealed once you RSVP",
+      cta: "RSVP",
+      already: "Already confirmed?",
+      form_title: "Confirm your attendance",
+      name_label: "Your name",
+      name_ph: "Mary Smith",
+      name_help: "If your name is common, add something to tell you apart (e.g. Mary S. - Aunt).",
+      attending_label: "Will you attend?",
+      yes: "Yes, I'll be there",
+      no: "Can't make it",
+      plusone: "Bringing someone with you?",
+      plusone_ph: "Your +1's name (optional)",
+      submit: "Confirm",
+      reveal_title: "See you soon!",
+      venue_k: "Venue",
+      addr_k: "Address",
+      date_k: "Date & time",
+      date_v: "Saturday, September 12, 2026 · 3:00 - 7:00 PM",
+      map: "Open in Google Maps",
+      change: "Change my RSVP",
+      c_title_a: "Something", c_title_b: "sweet", c_title_c: "is on the way"
+    }
+  };
+
+  function params() {
+    var p = new URLSearchParams(location.search);
+    return {
+      variant: ORDER.indexOf(p.get("variant")) >= 0 ? p.get("variant") : "A",
+      state: ["landing", "rsvp", "reveal"].indexOf(p.get("state")) >= 0 ? p.get("state") : "landing",
+      lang: p.get("lang") === "en" ? "en" : "es"
+    };
+  }
+
+  function write(next) {
+    var p = new URLSearchParams(location.search);
+    p.set("variant", next.variant); p.set("state", next.state); p.set("lang", next.lang);
+    history.replaceState(null, "", location.pathname + "?" + p.toString());
+    render(next);
+  }
+
+  function render(cur) {
+    document.querySelectorAll(".variant").forEach(function (v) {
+      v.classList.toggle("active", v.dataset.variant === cur.variant);
+    });
+    document.querySelectorAll(".variant.active .state").forEach(function (s) {
+      s.classList.toggle("active", s.dataset.state === cur.state);
+    });
+    document.querySelectorAll(".chrome-bar [data-goto-state]").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.gotoState === cur.state);
+    });
+    document.querySelectorAll(".lang").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.lang === cur.lang);
+    });
+    document.getElementById("vkey").textContent = cur.variant;
+    document.getElementById("vlabel").textContent = VARIANTS[cur.variant];
+    document.documentElement.lang = cur.lang;
+    var dict = I18N[cur.lang];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var k = el.dataset.i18n; if (dict[k]) el.textContent = dict[k];
+    });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function (el) {
+      var k = el.dataset.i18nPh; if (dict[k]) el.placeholder = dict[k];
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-goto-state], [data-cycle], .lang");
+    if (!t) return;
+    var cur = params();
+    var i;
+    if (t.dataset.gotoState) { cur.state = t.dataset.gotoState; write(cur); return; }
+    if (t.dataset.lang) { cur.lang = t.dataset.lang; write(cur); return; }
+    if (t.dataset.cycle) {
+      i = (ORDER.indexOf(cur.variant) + Number(t.dataset.cycle) + ORDER.length) % ORDER.length;
+      cur.variant = ORDER[i]; write(cur);
+    }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var tag = (document.activeElement && document.activeElement.tagName) || "";
+    if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    var cur = params();
+    var d = e.key === "ArrowLeft" ? -1 : 1;
+    var i = (ORDER.indexOf(cur.variant) + d + ORDER.length) % ORDER.length;
+    cur.variant = ORDER[i]; write(cur);
+  });
+
+  document.querySelectorAll("[data-plusone-toggle]").forEach(function (cb) {
+    cb.addEventListener("change", function () {
+      cb.closest("form").querySelector(".plusone-name").classList.toggle("hidden", !cb.checked);
+    });
+  });
+
+  document.querySelectorAll("[data-fake-submit]").forEach(function (f) {
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var cur = params(); cur.state = "reveal"; write(cur);
+    });
+  });
+
+  render(params());
+})();
+</script>
+</body>
+</html>
