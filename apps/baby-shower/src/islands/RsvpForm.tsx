@@ -1,8 +1,8 @@
 import { useState } from "preact/hooks"
-import { hc } from "hono/client"
+import { Button } from "../components/button"
+import { client } from "../lib/client"
 import { asLanguage, t, type Language } from "../lib/i18n"
 import { island } from "../lib/preact-islands"
-import type { RsvpRoute } from "../routes/rsvp"
 
 type RsvpFormProps = {
   lang?: Language
@@ -19,7 +19,6 @@ function RsvpForm({ lang }: RsvpFormProps) {
     const data = new FormData(event.currentTarget as HTMLFormElement)
     setStatus("submitting")
     try {
-      const client = hc<RsvpRoute>("/")
       const res = await client.api.rsvp.$post({
         json: {
           name: String(data.get("name") ?? ""),
@@ -79,9 +78,9 @@ function RsvpForm({ lang }: RsvpFormProps) {
         </label>
       </fieldset>
 
-      <button type="submit" disabled={status === "submitting"} class="bg-iris px-4 py-2 text-base">
+      <Button type="submit" disabled={status === "submitting"}>
         {m.submitLabel}
-      </button>
+      </Button>
 
       {status === "error" && (
         <p role="alert" class="text-rose">
