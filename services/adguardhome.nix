@@ -18,6 +18,7 @@
         port = 53;
         upstream_dns = [
           "1.1.1.1"
+          "1.0.0.1"
         ];
         fallback_dns = ["9.9.9.9"];
         bootstrap_dns = ["1.1.1.1" "9.9.9.9"];
