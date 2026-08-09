@@ -2,6 +2,8 @@
 
 Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+Exception: the baby-shower app's tickets and wayfinder map live on `fveracoechea/baby-shower` (the app repo). The wayfinding operations below apply there too — substitute the repo name.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
