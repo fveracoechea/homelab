@@ -21,11 +21,11 @@ The one extra person a guest may bring. An explicit toggle on the RSVP; naming t
 _Avoid_: companion, "+1" as a noun in prose
 
 **Reveal**:
-The post-confirmation content shown only to attending guests: venue name, address (as a Google Maps link), date, start-end time.
+The post-confirmation content shown only to attending guests: venue name, address (as a Google Maps link), an embedded Google Map, venue photos, date, start-end time, and the dress code. The public landing shows only the city ("Hoschton, GA") before confirmation.
 _Avoid_: details section, location block
 
 **Cutoff**:
-Event date minus 7 days. New RSVPs and edits freeze at this moment; retrieval stays available read-only.
+Event date minus 7 days, at the end of that calendar day in the event's timezone. New RSVPs and edits freeze at this moment; retrieval stays available read-only.
 _Avoid_: deadline, lock date
 
 **Retrieval**:
