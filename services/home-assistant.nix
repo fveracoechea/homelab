@@ -3,7 +3,6 @@
 
   services.home-assistant = {
     enable = true;
-    openFirewall = false;
 
     extraComponents = [
       "default_config" # meta-component: enables the standard integration bundle (frontend, automation, integrations UI, onboarding, etc.)
