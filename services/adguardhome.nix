@@ -14,7 +14,7 @@
       ];
 
       dns = {
-        bind_hosts = ["0.0.0.0"];
+        bind_hosts = ["10.0.0.2"];
         port = 53;
         upstream_dns = [
           "1.1.1.1"
@@ -64,10 +64,6 @@
   '';
 
   networking.firewall.interfaces.enp8s0 = {
-    allowedUDPPorts = [53];
-    allowedTCPPorts = [53];
-  };
-  networking.firewall.interfaces.tailscale0 = {
     allowedUDPPorts = [53];
     allowedTCPPorts = [53];
   };

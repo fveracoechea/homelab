@@ -20,9 +20,14 @@ in {
       };
 
       dns = {
-        magic_dns = true;
-        base_domain = "tailnet.veracoechea.com";
-        nameservers.global = ["100.64.0.1"];
+        magic_dns = false;
+        base_domain = "";
+        override_local_dns = false;
+        nameservers = {
+          global = [];
+          split = {};
+        };
+        search_domains = [];
       };
 
       derp = {
@@ -53,5 +58,3 @@ in {
 
   networking.firewall.allowedUDPPorts = [3478];
 }
-
-

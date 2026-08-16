@@ -2,7 +2,7 @@
 
 ## Context
 
-The homelab runs AdGuard Home (`services/adguardhome.nix`) as a network-wide ad-blocking DNS server, bound to `10.0.0.2:53`. It works over the LAN (`enp8s0`) and the Tailscale mesh (`tailscale0`). Tailnet devices get ad-blocking automatically via Headscale's `nameservers.global = ["10.0.0.2"]` config.
+The homelab runs AdGuard Home (`services/adguardhome.nix`) as a LAN-only ad-blocking DNS server, bound to `10.0.0.2:53`. Headscale does not manage DNS, so clients use AdGuard on the LAN and their current Wi-Fi or cellular resolver away from home.
 
 The remaining gap is LAN devices that can't run Tailscale (smart TVs, IoT, game consoles). The Xfinity-provided gateway doesn't allow changing DHCP DNS settings, so a third-party router is needed to set the DHCP DNS to `10.0.0.2` for all LAN devices.
 
@@ -50,7 +50,7 @@ The Xfinity gateway goes into **Bridge Mode** - it becomes a plain modem, passin
 | DHCP pool start | `10.0.0.100` | Reserve low range for static assignments |
 | DHCP pool end | `10.0.0.250` | |
 | Primary DNS | `10.0.0.2` | AdGuard Home on the homelab |
-| Secondary DNS | `1.1.1.1` | Cloudflare fallback (if homelab is down) |
+| Secondary DNS | Blank | A second resolver would let clients bypass AdGuard |
 
 ### DHCP reservation for homelab
 
@@ -78,18 +78,20 @@ From `services/adguardhome.nix`:
 | Bootstrap DNS | `1.1.1.1`, `9.9.9.9` |
 | Filtering | Enabled (protection + ad blocking) |
 | Starter blocklists | AdGuard HostlistsRegistry filters 9 (malware) and 11 (malicious URLs) |
-| Mutable settings | `true` (web UI changes persist in `/var/lib/adguardhome/`) |
-| Firewall | `53/udp` open on `enp8s0` and `tailscale0` |
+| Mutable settings | `false` (settings are managed by Nix) |
+| Firewall | `53/udp` and `53/tcp` open only on `enp8s0` |
 
-### Tailnet DNS (already configured)
+### Tailnet DNS (disabled)
 
 From `services/headscale.nix`:
 
 | Setting | Value |
 |---|---|
-| `dns.nameservers.global` | `["10.0.0.2"]` (was `["1.1.1.1"]`) |
+| `dns.magic_dns` | `false` |
+| `dns.override_local_dns` | `false` |
+| `dns.nameservers.global` | `[]` |
 
-All tailnet devices automatically use AdGuard Home for DNS. Tailscale's local proxy (`100.100.100.100`) intercepts the device's DNS and forwards to `10.0.0.2:53` through the mesh.
+Headscale does not manage client DNS. Tailnet devices use DNS from their current network. Public `*.veracoechea.com` records resolve homelab services to the tailnet IP, so MagicDNS is not needed.
 
 ### Homelab self-DNS exclusion (already configured)
 
@@ -113,22 +115,18 @@ device -> DHCP DNS (10.0.0.2) -> AdGuard Home (enp8s0, 53/udp)
 ### Phone on cellular (Tailscale connected)
 
 ```
-phone -> 100.100.100.100 (Tailscale local proxy)
-  -> Tailscale daemon forwards to 10.0.0.2:53 (via mesh tunnel)
-  -> AdGuard Home (tailscale0, 53/udp)
-  -> filters ads -> forwards to Cloudflare (1.1.1.1), fallback Quad9 (9.9.9.9)
+phone -> current cellular or Wi-Fi resolver
 ```
 
 ### Phone on home WiFi (Tailscale connected)
 
 ```
-phone -> 100.100.100.100 (Tailscale shadows DHCP DNS)
-  -> Tailscale daemon forwards to 10.0.0.2:53 (via mesh tunnel, local)
-  -> AdGuard Home (tailscale0, 53/udp)
+phone -> DHCP DNS (10.0.0.2)
+  -> AdGuard Home (enp8s0, 53/udp)
   -> filters ads -> forwards to Cloudflare (1.1.1.1), fallback Quad9 (9.9.9.9)
 ```
 
-AdGuard is hit exactly once in every scenario. No double-querying.
+AdGuard filters LAN devices whether or not Tailscale is connected because Headscale does not override DNS.
 
 ## Action plan
 
@@ -140,7 +138,7 @@ The following files have been committed:
 
 - `services/adguardhome.nix` - AdGuard Home service, Caddy vhost, firewall rules
 - `hosts/homelab/configuration.nix` - import added
-- `services/headscale.nix` - `nameservers.global` changed to `["10.0.0.2"]`
+- `services/headscale.nix` - Headscale DNS management and MagicDNS disabled
 - `services/tailscale.nix` - `--accept-dns=false` added to `extraUpFlags`
 - `CONTEXT.md` - glossary, layout, and notes updated
 
@@ -164,7 +162,7 @@ Verify on the homelab:
 
 Verify on the VPS:
 - `systemctl status headscale` is active
-- Headscale config reflects `nameservers.global = ["10.0.0.2"]`
+- Headscale config reflects `magic_dns = false`, `override_local_dns = false`, and no nameservers
 
 ### Step 3 - Physical router setup (user does this once router arrives)
 
@@ -197,7 +195,7 @@ In the ASUS admin interface:
    - IP pool start: `10.0.0.100`
    - IP pool end: `10.0.0.250`
    - **DNS Server 1: `10.0.0.2`** (AdGuard Home)
-   - DNS Server 2: `1.1.1.1` (fallback)
+   - DNS Server 2: leave blank
    - Apply
 
 3. **DHCP reservation for homelab**
@@ -247,7 +245,7 @@ In the ASUS admin interface:
    ```bash
    nslookup google.com
    ```
-   Should resolve via `100.100.100.100` -> `10.0.0.2`. Check the AdGuard query log - the query should appear from the `tailscale0` interface.
+   Public names should resolve through Cloudflare. The query should not appear in the AdGuard query log.
 
 ### Step 7 - Add more blocklists (user does this in AdGuard web UI)
 
@@ -260,15 +258,27 @@ The Nix config includes two starter blocklists (malware + malicious URLs). For a
    - **Haase filter** - `https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt` (general ads)
    - **Dan Pollock's hosts file** - `https://someonewhocares.org/hosts/zero/hosts` (ads + tracking + telemetry)
    - **StevenBlack Unified** - `https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts` (ads + malware + fakenews)
-4. These persist across restarts via `mutableSettings = true` - they live in `/var/lib/adguardhome/` and aren't overwritten by Nix on rebuild
+4. Add permanent blocklists to `services/adguardhome.nix`; `mutableSettings = false` means Nix replaces web UI changes during activation.
 
 ## Non-goals / explicit exclusions
 
-- **Do not open port 53 on the public internet** - AdGuard DNS is reachable only via LAN (`enp8s0`) and tailnet (`tailscale0`). The homelab is behind Xfinity NAT regardless.
+- **Do not open port 53 outside the LAN** - AdGuard DNS listens on `10.0.0.2` and its firewall rule applies only to `enp8s0`.
 - **Do not change the homelab's system DNS** - `--accept-dns=false` in `services/tailscale.nix` prevents the homelab from using AdGuard as its own resolver, avoiding a boot-order dependency.
-- **Do not use DoH (DNS-over-HTTPS) via Caddy** - Option B was considered but Option A (direct DNS via Tailscale) is simpler and automatic for all tailnet devices.
+- **Do not use DoH (DNS-over-HTTPS) via Caddy** - clients use DNS from their current network.
 - **Do not use the router's built-in VPN** - the homelab already has Tailscale for remote access. The ASUS router's VPN server/client features are redundant.
 - **Never build the system config** - the user does `nixos-rebuild test --flake .#homelab` and `nixos-rebuild test --flake .#hostinger` themselves (per `AGENTS.md`).
+
+## Headscale DNS decision
+
+Headscale DNS management is disabled. This avoids iPhone delays caused by routing every DNS query through a tailnet resolver and lets LAN devices use AdGuard Home through DHCP.
+
+The consequences are:
+
+- LAN clients use AdGuard Home at `10.0.0.2` and receive DNS blocking.
+- Remote clients use DNS supplied by their current Wi-Fi or cellular network.
+- MagicDNS names such as `homelab.tailnet.veracoechea.com` do not resolve.
+- Public `*.veracoechea.com` names continue to work through public DNS and Caddy.
+- Privacy-sensitive remote clients need a separate encrypted DNS profile if they should not use their network provider's resolver.
 
 ## Suggested skills
 
@@ -281,7 +291,7 @@ The Nix config includes two starter blocklists (malware + malicious URLs). For a
 - `AGENTS.md` - repo guidelines (don't build, kebab-case files, `nix flake check`, `nixos-rebuild test`)
 - `CONTEXT.md` - AdGuard Home glossary entry, layout, and notes (lines 28-29, 47, 72)
 - `services/adguardhome.nix` - AdGuard Home service config
-- `services/headscale.nix` - Headscale DNS config (`nameservers.global`)
+- `services/headscale.nix` - disabled Headscale DNS configuration
 - `services/tailscale.nix` - `--accept-dns=false` flag
 - ASUS RT-BE82U tech specs: https://www.asus.com/us/networking-iot-servers/wifi-routers/asus-wifi-routers/rt-be82u/techspec/
 - ASUS RT-BE82U product page: https://www.asus.com/us/networking-iot-servers/wifi-routers/asus-wifi-routers/rt-be82u/
