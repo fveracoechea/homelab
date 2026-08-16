@@ -51,6 +51,10 @@ in {
 
   services.caddy.virtualHosts."${domain}".extraConfig = ''
     tls /var/lib/acme/vpn.veracoechea.com/fullchain.pem /var/lib/acme/vpn.veracoechea.com/key.pem
+    log {
+      output file /var/log/caddy/access-vpn.veracoechea.com.log
+      format json
+    }
     reverse_proxy 127.0.0.1:${toString 8081} {
       header_up X-Forwarded-For {remote_host}
     }

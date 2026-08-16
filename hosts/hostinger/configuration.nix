@@ -36,7 +36,13 @@
     enable = true;
     openFirewall = true;
     settings = {
+      AllowUsers = ["fveracoechea"];
+      KbdInteractiveAuthentication = false;
+      LoginGraceTime = 30;
+      MaxAuthTries = 3;
+      MaxStartups = "10:30:30";
       PermitRootLogin = "no";
+      PerSourceMaxStartups = 3;
       PasswordAuthentication = false;
       X11Forwarding = false;
     };

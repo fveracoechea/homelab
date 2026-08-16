@@ -1,7 +1,7 @@
 {...}: {
   services.fail2ban = {
     enable = true;
-    maxretry = 5;
+    maxretry = 3;
     bantime = "1h";
     bantime-increment = {
       enable = true;
@@ -12,15 +12,15 @@
       sshd = {
         enabled = true;
         settings = {
-          port = 22;
-          filter = "sshd";
-          logpath = "/var/log/auth.log";
+          mode = "aggressive";
+          findtime = "10m";
         };
       };
       headscale-api = {
         enabled = true;
         settings = {
           port = "443";
+          backend = "auto";
           filter = "headscale-api";
           logpath = "/var/log/caddy/access-vpn.veracoechea.com.log";
           maxretry = 5;
@@ -33,7 +33,7 @@
 
   environment.etc."fail2ban/filter.d/headscale-api.conf".text = ''
     [Definition]
-    failregex = ^.*"status": (401|403).*"host": "<HOST>".*$
+    failregex = ^.*"remote_ip"\s*:\s*"<HOST>".*"status"\s*:\s*(?:401|403)(?:,|}).*$
     ignoreregex =
   '';
 }
