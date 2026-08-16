@@ -87,11 +87,11 @@
     "baby-shower": {
       "flake": false,
       "locked": {
-        "lastModified": 1786904264,
-        "narHash": "sha256-Z9WYes7Mu9FLxm5rzNI16emVxLt8d3ohZxahMEmjRz0=",
+        "lastModified": 1786922871,
+        "narHash": "sha256-6i4xFMEIs7FLa1Qhhd3WKIHKgBG2ndakQU13y73N9Ew=",
         "owner": "fveracoechea",
         "repo": "baby-shower",
-        "rev": "3b80679957d0c53b121c613ab268a04c1622b8c9",
+        "rev": "5cff1a3827164323b1f2de31f3be6840688186ab",
         "type": "github"
       },
       "original": {
