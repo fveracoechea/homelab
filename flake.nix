@@ -12,6 +12,14 @@
 
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+
+    baby-shower = {
+      url = "github:fveracoechea/baby-shower";
+      flake = false;
+    };
+
+    bun2nix.url = "github:nix-community/bun2nix";
+    bun2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -19,6 +27,7 @@
     home-manager,
     dotfiles,
     disko,
+    bun2nix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -52,6 +61,7 @@
         {
           nixpkgs.hostPlatform = system;
           nixpkgs.config.allowUnfree = true;
+          nixpkgs.overlays = [bun2nix.overlays.default];
         }
       ];
     };
