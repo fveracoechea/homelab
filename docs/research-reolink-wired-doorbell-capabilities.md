@@ -1,6 +1,7 @@
 # Research: Reolink wired-doorbell local capabilities
 
-Research date: 2026-08-23  
+Research date: 2026-08-23
+
 Issue: [#16](https://github.com/fveracoechea/homelab/issues/16)
 
 ## Decision
