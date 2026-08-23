@@ -6,26 +6,28 @@ Research date: 2026-08-23
 
 Which architectures can ingest the Reolink doorbell locally, preserve a temporary pre-event buffer, persist only confirmed person events for 14 days, remain independent of Home Assistant, and scale to four cameras?
 
-## Executive recommendation
+## Comparison result
 
-Use a standalone Frigate Service on the homelab as the primary event recorder. Connect each supported, mains-powered Reolink camera to Frigate through its local stream. Use a low-resolution substream for detection and the main stream for retained video. Configure only `person` alerts, set continuous and motion retention to zero, set alert retention to 14 days, and use alert pre-capture and post-capture values that tests show are sufficient. Run Frigate without an MQTT dependency. Home Assistant can consume Frigate events later, but it must not start, stop, or retain recordings.
+Frigate is the assessed architecture with documented controls for local stream ingestion, bounded pre-capture, review-item retention, and operation without Home Assistant. This is a comparison finding, not a selection. Later grilling tickets own the choice of primary recorder and its operational policy.
 
-This is the best match because Frigate documents all of the required control points:
+For a strict person-only Frigate policy, an implementation must configure all of these separate controls, subject to camera-level scope where needed:
 
-- It writes new recording segments to a temporary cache and moves only segments that match the retention policy to recording storage [F1].
-- It can retain only alert video and can restrict alerts to the `person` label [F1, F2].
-- Its current configuration model has explicit pre-capture, post-capture, and retention-day fields. Pre-capture supports up to 60 seconds [F3, F4].
-- Its cleanup code calculates an age cutoff from the configured number of days and runs cleanup at a configurable interval, which defaults to 60 minutes [F3, F5].
-- Official examples show that Frigate can run with MQTT disabled. Thus, Home Assistant is not in the recording path [F6].
-- Frigate classifies one to six cameras with occasional motion as a low simultaneous-activity system that can use one entry-level accelerator [F7]. Four cameras are in this range.
+- `objects.track: [person]` limits object tracking to people. In 0.17.2, this is the default, but it must be explicit if the policy must resist later configuration changes [F2, F3].
+- `review.alerts.labels: [person]` limits alert review items to people. Frigate 0.17.2 defaults include `person` and `car` alerts; therefore car alerts occur by default unless tracked/review labels are restricted to `person` [F2, F4].
+- `review.detections.labels: []` prevents non-alert review items. Otherwise, detections default to tracked labels that are not alerts [F2].
+- `record.continuous.days: 0`, `record.motion.days: 0`, `record.alerts.retain.days: 14`, and `record.detections.retain.days: 0` prevent continuous, motion, and detection retention while retaining alert-overlapping segments for 14 days [F1, F5]. `record.alerts.retain.mode: all` is needed if every segment overlapping an alert, rather than only motion/activity segments, must persist [F1].
+- Alert `pre_capture` and `post_capture` values are separate recording controls. Pre-capture supports up to 60 seconds in 0.17.2 and must be measured against each installed camera [F3, F5].
+- Frigate writes new recording segments to a temporary cache and moves matching segments to recording storage. Its cleanup uses review-item `end_time` and normally runs at the configured `expire_interval`, which defaults to 60 minutes [F1, F5, F6].
+- Official examples show that Frigate can run with MQTT disabled. Thus, Home Assistant is not in the recording path [F7].
+- Frigate classifies one to six cameras with occasional motion as a low simultaneous-activity system that can use one entry-level accelerator [F8]. Four cameras are in this range.
 
-Use camera-native person-event recording to microSD as an optional second copy, not as the primary 14-day store. Reolink documents pre-motion recording, person-specific schedules, and local operation. However, microSD overwrite is capacity-based, not age-based. FTP can use a server-side 14-day deletion policy, but Reolink states that FTP pre-motion frames can be lost when network conditions are poor [R1, R2, R3, R6, H2].
+Reolink camera-native person-event recording to microSD can be an independent second copy. Reolink documents pre-motion recording, person-specific schedules, and local operation. However, microSD overwrite is capacity-based, not age-based. FTP can use a server-side 14-day deletion policy, but Reolink states that FTP pre-motion frames can be lost when network conditions are poor [R1, R2, R3, R6, H2].
 
-Do not use Home Assistant-triggered `camera.record` for the primary recorder. It has useful lookback, but lookback needs an active HLS stream, clip lengths are approximate, retention needs separate automation, and the complete path fails when Home Assistant fails [H1, H2].
+Home Assistant-triggered `camera.record` has useful lookback, but lookback needs an active HLS stream, clip lengths are approximate, retention needs separate automation, and the complete path depends on Home Assistant [H1, H2].
 
-Agent DVR is the strongest alternative when its operator experience or local feedback-based false-positive suppression is preferred. It supports local AI, alert-only recording, a pre-record buffer, and age-based storage cleanup. Its built-in local AI needs a license or active subscription, and its storage and detector behavior has more independent controls to coordinate than the Frigate policy [A1, A2, A3].
+Agent DVR is an alternative with local AI, alert-only recording, a pre-record buffer, and age-based storage cleanup. Its built-in local AI needs a license or active subscription, and its storage and detector behavior has more independent controls to coordinate than the Frigate policy [A1, A2, A3].
 
-No assessed architecture can guarantee deletion at the exact instant that a clip becomes 14 days old. Frigate's default cleanup interval permits normal deletion up to about one hour after the cutoff. Storage pressure can delete footage earlier. Treat "14 days" as a policy target: retain for at least 14 days during normal operation, then delete on the next cleanup pass. Provide enough storage so emergency cleanup does not violate the target [F1, F3, F5].
+No assessed architecture can guarantee deletion at the exact instant that a clip becomes 14 days old. Frigate's default cleanup interval permits normal deletion up to about one hour after the cutoff. Storage pressure can delete footage earlier. Treat "14 days" as a policy target: retain for at least 14 days during normal operation, then delete on the next cleanup pass. Provide enough storage so emergency cleanup does not violate the target [F1, F3, F6].
 
 ## Fact and assessment method
 
@@ -39,17 +41,17 @@ The terms in this report have these meanings:
 
 ## Criteria matrix
 
-| Architecture | Fully local data path | Temporary pre-roll | Persists only person events | 14-day age policy | Independent of Home Assistant | Four-camera fit | Decision |
+| Architecture | Fully local data path | Temporary pre-roll | Persists only person events | 14-day age policy | Independent of Home Assistant | Four-camera fit | Assessment |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Reolink camera to microSD | Yes for supported models | Yes on mains-powered PoE and plug-in WiFi models | Yes when the model exposes person-specific record schedules | No exact age control; overwrite is capacity-based | Yes | Good; work is distributed across cameras | Useful fallback, not primary |
+| Reolink camera to microSD | Yes for supported models | Yes on mains-powered PoE and plug-in WiFi models | Yes when the model exposes person-specific record schedules | No exact age control; overwrite is capacity-based | Yes | Good; work is distributed across cameras | Independent copy possible; not an age-policy store |
 | Reolink camera to local FTP | Yes when the FTP host is local | Supported, but Reolink says network quality can cause loss of pre-motion frames | Yes when the model exposes person-specific FTP schedules | Yes only with a separate FTP-host deletion job | Yes | Good; central FTP is simple at four cameras | Viable simple design after device test |
-| Home Assistant person event to `camera.record` | Yes when all components are local | Conditional; lookback needs an active HLS stream | Yes, by automation trigger | Separate file cleanup is required | No | Technically possible, but adds four always-active HLS buffers and automation coordination | Reject as primary |
-| Frigate detection and recording | Yes; MQTT and cloud services are optional | Yes; temporary segment cache plus 0-60 second configured pre-capture | Yes; person-only alert policy and zero continuous/motion retention | Native day setting; cleanup interval means not instant | Yes when run as its own Service with MQTT disabled | Strong; official planning class covers 1-6 low-activity cameras | Recommend |
-| Agent DVR local AI and alert recording | Yes for local streams and local AI | Yes; camera recording buffer is written when recording starts | Yes through local person AI, alert action, and Alert recording mode | Native maximum age in hours; cleanup timing and size limits apply | Yes | Credible; exact capacity must be measured on the selected model and hardware | Strong alternative |
-| Scrypted NVR | Local recording and detection are possible | Continuous recording inherently contains pre-event video | No; official NVR design records 24/7 | Storage is primarily capacity-managed | Yes | Strong at four cameras, but needs at least 1 TB and continuous storage | Reject for event-only requirement |
-| go2rtc plus a custom event recorder | Local restream is possible | Not supplied by go2rtc as a supported recorder feature | Only through custom detector and recorder logic | Only through custom cleanup | Yes if custom services are independent | Possible, but creates unowned custom seams | Reject; Frigate already supplies these controls |
+| Home Assistant person event to `camera.record` | Yes when all components are local | Conditional; lookback needs an active HLS stream | Yes, by automation trigger | Separate file cleanup is required | No | Technically possible, but adds four always-active HLS buffers and automation coordination | Does not meet the HA-independence requirement |
+| Frigate detection and recording | Yes; MQTT and cloud services are optional | Yes; temporary segment cache plus 0-60 second configured pre-capture | Yes, with explicit person-only tracking, alert, detection, and retention controls | Native day setting; cleanup interval means not instant | Yes when run as its own Service with MQTT disabled | Strong; official planning class covers 1-6 low-activity cameras | Meets documented mechanics; selection is deferred |
+| Agent DVR local AI and alert recording | Yes for local streams and local AI | Yes; camera recording buffer is written when recording starts | Yes through local person AI, alert action, and Alert recording mode | Native maximum age in hours; cleanup timing and size limits apply | Yes | Credible; exact capacity must be measured on the selected model and hardware | Meets mechanics with license and load-test gates |
+| Scrypted NVR | Local recording and detection are possible | Continuous recording inherently contains pre-event video | No; official NVR design records 24/7 | Storage is primarily capacity-managed | Yes | Strong at four cameras, but needs at least 1 TB and continuous storage | Does not meet the event-only requirement |
+| go2rtc plus a custom event recorder | Local restream is possible | Not supplied by go2rtc as a supported recorder feature | Only through custom detector and recorder logic | Only through custom cleanup | Yes if custom services are independent | Possible, but creates unowned custom seams | Requires custom ownership of missing recorder functions |
 
-Matrix facts come from [R1-R6], [H1-H3], [F1-F10], [A1-A3], [S1-S2], and [G1-G2]. Decision cells are assessments.
+Matrix facts come from [R1-R6], [H1-H2], [F1-F10], [A1-A3], [S1-S2], and [G1-G2]. Assessment cells do not select an architecture.
 
 ## Architecture details
 
@@ -78,7 +80,6 @@ The design is weaker than Frigate for policy inspection. The camera UI and firmw
 
 - The Reolink integration provides local AI person binary sensors. It uses TCP push, ONVIF push, ONVIF long polling, or five-second fast polling, in that order, and also performs a 60-second redundancy poll [H2].
 - `camera.record` writes an MP4 from a camera stream. `lookback` adds video from before the action only when an HLS stream is already active. Home Assistant says duration and lookback are planned values and actual lengths can vary [H1].
-- Home Assistant source creates one stream worker per camera and passes duration and lookback to the stream recorder [H3].
 
 **Assessment**
 
@@ -92,19 +93,19 @@ This path remains useful for notifications or a non-critical second clip. It mus
 
 **Documented facts**
 
-- Frigate writes new stream segments to `/tmp/cache`. It moves only segments that match the configured recording retention policy to `/media/frigate/recordings`. Recording segments are remuxed without video re-encoding [F1, F8].
-- The official installation guide recommends a tmpfs mount for `/tmp/cache` [F8]. This keeps the short rolling write load in RAM rather than on persistent storage.
-- An alerts-only configuration sets continuous retention to zero and retains only segments that overlap alerts [F1]. Review alerts can be restricted to `person`, and zones can further restrict which people create alerts [F2].
-- Current official source defines five-second default pre-capture and post-capture values and permits pre-capture up to 60 seconds [F3, F4]. The recording maintainer holds non-matching segments until they are older than the configured event pre-capture window, then drops them [F4].
-- Current cleanup source computes retention cutoffs from configured day values and deletes expired recording segments. It runs cleanup every `expire_interval`; the default is 60 minutes [F3, F5]. If less than one hour of storage remains, Frigate can delete the oldest hour without regard to retention [F1].
-- Frigate has an official Reolink stream recipe. It warns that Reolink feature and stream behavior is inconsistent across models. It recommends HTTP-FLV for 5 MP and lower cameras, CBR or "fluency first," and an interframe interval equal to the frame rate [F9].
+- Frigate writes new stream segments to `/tmp/cache`. It moves only segments that match the configured recording retention policy to `/media/frigate/recordings`. Recording segments are remuxed without video re-encoding [F1].
+- The official installation guide recommends a tmpfs mount for `/tmp/cache` [F9]. This keeps the short rolling write load in RAM rather than on persistent storage.
+- An alerts-only configuration sets continuous retention to zero and retains only segments that overlap alerts [F1]. Review alerts can be restricted to `person`, and zones can further restrict which people create alerts [F2]. Frigate defaults include car alerts unless tracked/review labels are restricted to person [F2, F4].
+- Frigate 0.17.2 source defines five-second default pre-capture and post-capture values and permits pre-capture up to 60 seconds [F3, F5]. The recording maintainer holds non-matching segments until they are older than the configured event pre-capture window, then drops them [F6].
+- Frigate 0.17.2 cleanup source computes retention cutoffs from configured day values using review-item `end_time`. It normally runs cleanup at `expire_interval`; the default is 60 minutes [F3, F6]. If less than one hour of storage remains, Frigate can delete the oldest hour without regard to retention [F1].
+- Frigate has an official Reolink stream recipe. It warns that Reolink feature and stream behavior is inconsistent across models. It recommends HTTP-FLV for 5 MP and lower cameras, CBR or "fluency first," and an interframe interval equal to the frame rate [F10].
 - Frigate recommends a 5 fps detection stream and normally uses a separate main stream for recording [F10].
-- Official configuration examples show `mqtt.enabled: False`, so Frigate can run without Home Assistant or an MQTT broker [F6].
-- Frigate says one entry-level accelerator is sufficient for one to six cameras with occasional motion. Hardware video decoding is recommended for multiple cameras [F7].
+- Official configuration examples show `mqtt.enabled: False`, so Frigate can run without Home Assistant or an MQTT broker [F7].
+- Frigate says one entry-level accelerator is sufficient for one to six cameras with occasional motion. Hardware video decoding is recommended for multiple cameras [F8].
 
 **Assessment**
 
-The target flow is camera local main and substreams -> Frigate/go2rtc -> Frigate motion gate -> Frigate person detector -> person alert policy -> retained recording segments. The record stream is continuously ingested into tmpfs, but only qualifying person-alert segments are persisted to recording storage.
+The Frigate flow is camera local main and substreams -> Frigate/go2rtc -> Frigate motion gate -> Frigate person detector -> person alert policy -> retained recording segments. The record stream is continuously ingested into tmpfs, but only qualifying person-alert segments are persisted to recording storage when the explicit policy above is used.
 
 Use a dedicated Frigate Service and persistent Frigate database. Do not run Frigate as a Home Assistant child process if process independence is a strict requirement. Home Assistant can read Frigate later, but Frigate startup, detection, recording, and cleanup must not need Home Assistant.
 
@@ -148,9 +149,9 @@ Temporary video bytes for `P` seconds of buffered record video are approximately
 
 `N * B * P / 8 MB`
 
-This excludes segment overlap, container overhead, detection frames, audio, previews, and safety margin. Measure actual main and substream rates. Do not size from resolution alone. For Frigate, include enough tmpfs for the maximum pre-capture window, in-progress segments, concurrent camera activity, and delayed processing. The official 1 GB tmpfs example is a starting example, not a four-camera guarantee [F8].
+This excludes segment overlap, container overhead, detection frames, audio, previews, and safety margin. Measure actual main and substream rates. Do not size from resolution alone. For Frigate, include enough tmpfs for the maximum pre-capture window, in-progress segments, concurrent camera activity, and delayed processing. The official 1 GB tmpfs example is a starting example, not a four-camera guarantee [F9].
 
-Frigate also needs shared memory for decoded detection frames. Its installation guide gives a formula and states that the default 128 MB is suitable for two cameras detecting at 720p. Four cameras need a calculation from their actual detection resolutions [F8].
+Frigate also needs shared memory for decoded detection frames. Its installation guide gives a formula and states that the default 128 MB is suitable for two cameras detecting at 720p. Four cameras need a calculation from their actual detection resolutions [F9].
 
 ### Persistent event storage
 
@@ -185,25 +186,25 @@ Test the user-visible result, not only component health:
 ## Risks and open verification items
 
 1. **Exact doorbell identity:** Record the product name, color variant, hardware version, power mode, and firmware. "Reolink doorbell" is not enough. Battery first generation, battery second generation, plug-in WiFi, and PoE have different pre-record and local-stream behavior [R4].
-2. **Firmware behavior:** Verify that the installed firmware exposes a stable local main stream and substream, Person detection where required, pre-motion recording, and FTP where required. Reolink and Frigate both warn that behavior varies by model or hardware [R1, R5, F9].
+2. **Firmware behavior:** Verify that the installed firmware exposes a stable local main stream and substream, Person detection where required, pre-motion recording, and FTP where required. Reolink and Frigate both warn that behavior varies by model or hardware [R1, R5, F10].
 3. **Camera-native pre-roll length:** Reolink only documents "several seconds" that vary by model and hardware. Measure the actual clip [R1].
 4. **microSD versus FTP:** Verify whether this exact doorbell can write the same person event to microSD and FTP concurrently, and whether both copies contain pre-roll. This was not established by the reviewed official material.
 5. **FTP age source:** Decide whether 14 days starts at event time, upload completion, or server modification time. Delayed uploads and camera clock errors can change deletion time.
-6. **Frigate stream protocol:** Test HTTP-FLV and RTSP against the installed doorbell. Use the current official Reolink recipe, but do not assume one protocol is stable on every model [F9].
+6. **Frigate stream protocol:** Test HTTP-FLV and RTSP against the installed doorbell. Use the Frigate 0.17.2 Reolink recipe, but do not assume one protocol is stable on every model [F10].
 7. **Person policy:** Decide whether a person anywhere in frame is retained or only a person in one or more zones. Test threshold, minimum area, masks, stationary behavior, and night performance.
 8. **Detector failure policy:** Decide between fail-open and fail-closed. Fail-open keeps motion video when AI is unavailable but violates person-only persistence. Fail-closed preserves the storage rule but can lose security events.
-9. **Retention semantics:** Confirm that "14 days" means no normal deletion before 14 days and deletion on the next cleanup pass. Frigate's default pass is hourly, not instantaneous [F3, F5].
+9. **Retention semantics:** Confirm that "14 days" means no normal deletion before 14 days and deletion on the next cleanup pass. Frigate's default pass is hourly, not instantaneous [F3, F6].
 10. **Storage pressure:** Size storage and alerts so emergency deletion cannot occur during the 14-day target window [F1].
 11. **GPU contention:** Prove or avoid resource sharing between Frigate and Ollama on the RX 7600. A separate detector gives a cleaner failure boundary.
 12. **Fallback independence:** If microSD fallback is selected, test it while Frigate, FTP, and the homelab are unavailable. Confirm retrieval after service restoration.
 
-## Decision summary
+## Comparison summary
 
-Choose Frigate when the policy itself must be explicit, inspectable, and centrally enforced. It is the only assessed architecture with direct primary-source support for all core mechanics: local stream ingestion, bounded temporary pre-capture, person-only alert retention, native retention days, and operation without Home Assistant.
+Frigate is the only assessed architecture with direct primary-source support for all core mechanics: local stream ingestion, bounded temporary pre-capture, person-only alert retention, native retention days, and operation without Home Assistant. The person-only policy requires explicit tracking, review-label, and retention configuration; default alerts include cars [F1-F6].
 
-Choose Reolink-to-FTP only when lower system complexity is more important than centralized detector control and after the exact doorbell proves reliable person filtering and FTP pre-roll. Add server-side age cleanup because camera storage alone does not provide an exact 14-day rule.
+Reolink-to-FTP has lower system complexity, but the exact doorbell must prove reliable person filtering and FTP pre-roll. It needs server-side age cleanup because camera storage alone does not provide an exact 14-day rule.
 
-Choose Agent DVR only when its operator interface or local feedback learning is worth its license and additional policy controls. Do not choose Scrypted NVR for this requirement because it intentionally persists 24/7 video. Do not build a custom go2rtc event recorder because go2rtc does not supply pre-event lookback and the missing recorder functions are substantial.
+Agent DVR has a documented local-AI path, but it has license and policy-control gates. Scrypted NVR intentionally persists 24/7 video, so it does not meet this event-only requirement. go2rtc does not supply pre-event lookback; a custom recorder would need to own the missing functions. These comparisons do not select an architecture.
 
 ## Sources
 
@@ -222,20 +223,19 @@ All sources were retrieved on 2026-08-23. Official documentation and official pr
 
 - **[H1]** Home Assistant, [Record camera feed](https://www.home-assistant.io/actions/camera.record/).
 - **[H2]** Home Assistant, [Reolink integration](https://www.home-assistant.io/integrations/reolink/).
-- **[H3]** Home Assistant Core, [camera component source](https://github.com/home-assistant/core/blob/dev/homeassistant/components/camera/__init__.py) and [stream recorder source](https://github.com/home-assistant/core/blob/dev/homeassistant/components/stream/recorder.py).
 
 ### Frigate
 
-- **[F1]** Frigate, [Recording](https://docs.frigate.video/configuration/record/).
-- **[F2]** Frigate, [Review](https://docs.frigate.video/configuration/review/).
-- **[F3]** Frigate source, [record configuration model](https://github.com/blakeblackshear/frigate/blob/dev/frigate/config/camera/record.py).
-- **[F4]** Frigate source, [recording cache maintainer](https://github.com/blakeblackshear/frigate/blob/dev/frigate/record/maintainer.py) and [constants](https://github.com/blakeblackshear/frigate/blob/dev/frigate/const.py).
-- **[F5]** Frigate source, [recording cleanup](https://github.com/blakeblackshear/frigate/blob/dev/frigate/record/cleanup.py).
-- **[F6]** Frigate, [Frigate Configuration](https://docs.frigate.video/configuration/).
-- **[F7]** Frigate, [Planning a New Installation](https://docs.frigate.video/frigate/planning_setup/) and [Recommended hardware](https://docs.frigate.video/frigate/hardware/).
-- **[F8]** Frigate, [Installation](https://docs.frigate.video/frigate/installation/).
-- **[F9]** Frigate, [Camera Specific Configurations: Reolink Cameras](https://docs.frigate.video/configuration/camera_specific/#reolink-cameras).
-- **[F10]** Frigate, [Camera setup](https://docs.frigate.video/frigate/camera_setup/).
+- **[F1]** Frigate 0.17.2, [Recording](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/configuration/record.md).
+- **[F2]** Frigate 0.17.2, [Review](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/configuration/review.md).
+- **[F3]** Frigate 0.17.2 source, [record configuration model](https://github.com/blakeblackshear/frigate/blob/v0.17.2/frigate/config/camera/record.py).
+- **[F4]** Frigate 0.17.2 source, [review configuration model](https://github.com/blakeblackshear/frigate/blob/v0.17.2/frigate/config/camera/review.py) and [object configuration model](https://github.com/blakeblackshear/frigate/blob/v0.17.2/frigate/config/camera/objects.py).
+- **[F5]** Frigate 0.17.2 source, [constants](https://github.com/blakeblackshear/frigate/blob/v0.17.2/frigate/const.py).
+- **[F6]** Frigate 0.17.2 source, [recording cache maintainer](https://github.com/blakeblackshear/frigate/blob/v0.17.2/frigate/record/maintainer.py) and [recording cleanup](https://github.com/blakeblackshear/frigate/blob/v0.17.2/frigate/record/cleanup.py).
+- **[F7]** Frigate 0.17.2, [Frigate Configuration](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/configuration/index.md).
+- **[F8]** Frigate 0.17.2, [Planning a New Installation](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/frigate/planning_setup.md) and [Recommended hardware](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/frigate/hardware.md).
+- **[F9]** Frigate 0.17.2, [Installation](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/frigate/installation.md).
+- **[F10]** Frigate 0.17.2, [Camera Specific Configurations: Reolink Cameras](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/configuration/camera_specific.md#reolink-cameras) and [Camera setup](https://github.com/blakeblackshear/frigate/blob/v0.17.2/docs/docs/frigate/camera_setup.md).
 
 ### Agent DVR
 
