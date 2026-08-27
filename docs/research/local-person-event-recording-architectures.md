@@ -2,20 +2,31 @@
 
 Research date: 2026-08-23
 
+Installed-camera update: 2026-08-27
+
 ## Question
 
 Which architectures can ingest the Reolink doorbell locally, preserve a temporary pre-event buffer, persist only confirmed person events for 14 days, remain independent of Home Assistant, and scale to four cameras?
 
+## Installed-camera gate
+
+The purchased Reolink Battery Video Doorbell (2nd Gen) does not currently expose a documented continuous standalone RTSP/ONVIF stream. Reolink requires a Home Hub for its current protocol path, limits battery-camera RTSP preview sessions through a Hub or NVR to at most five minutes, and describes standalone Wired Power Mode RTSP/ONVIF as a future firmware feature. Therefore none of the continuous-ingest architectures below can use this camera today. The comparison remains applicable after replacement with a compatible plug-in Wi-Fi or PoE model, or after released firmware provides a verified continuous stream [R4, R7, R8].
+
 ## Comparison result
 
 Frigate is the assessed architecture with documented controls for local stream ingestion, bounded pre-capture, review-item retention, and operation without Home Assistant. This is a comparison finding, not a selection. Later grilling tickets own the choice of primary recorder and its operational policy.
+
+Two cross-research constraints keep that candidate unresolved:
+
+- Frigate 0.17.2 cleanup has an edge case where `continuous.days: 0` can remove pre-capture or post-capture segments from a recent review item. Strict 14-day event retention is unproven until this defect is fixed, avoided with a different configuration/version, or accepted as explicit loss semantics. See [Event-Retention Storage Guardrails](event-retention-storage-guardrails.md).
+- The 200 GiB operating budget permits at most 14.29 GiB/day for a 14-day target. Every candidate remains unresolved until measured total growth fits that threshold or an overflow policy chooses reduced retention, rejected/lost new data, or more capacity. See [Event-Retention Storage Guardrails](event-retention-storage-guardrails.md).
 
 For a strict person-only Frigate policy, an implementation must configure all of these separate controls, subject to camera-level scope where needed:
 
 - `objects.track: [person]` limits object tracking to people. In 0.17.2, this is the default, but it must be explicit if the policy must resist later configuration changes [F2, F3].
 - `review.alerts.labels: [person]` limits alert review items to people. Frigate 0.17.2 defaults include `person` and `car` alerts; therefore car alerts occur by default unless tracked/review labels are restricted to `person` [F2, F4].
 - `review.detections.labels: []` prevents non-alert review items. Otherwise, detections default to tracked labels that are not alerts [F2].
-- `record.continuous.days: 0`, `record.motion.days: 0`, `record.alerts.retain.days: 14`, and `record.detections.retain.days: 0` prevent continuous, motion, and detection retention while retaining alert-overlapping segments for 14 days [F1, F5]. `record.alerts.retain.mode: all` is needed if every segment overlapping an alert, rather than only motion/activity segments, must persist [F1].
+- `record.continuous.days: 0`, `record.motion.days: 0`, `record.alerts.retain.days: 14`, and `record.detections.retain.days: 0` express the intended alert-only 14-day policy [F1, F5]. They do not prove strict retention on 0.17.2 because the cleanup edge case can remove pre-capture or post-capture segments from recent review items. `record.alerts.retain.mode: all` is needed if every segment overlapping an alert, rather than only motion/activity segments, must persist [F1].
 - Alert `pre_capture` and `post_capture` values are separate recording controls. Pre-capture supports up to 60 seconds in 0.17.2 and must be measured against each installed camera [F3, F5].
 - Frigate writes new recording segments to a temporary cache and moves matching segments to recording storage. Its cleanup uses review-item `end_time` and normally runs at the configured `expire_interval`, which defaults to 60 minutes [F1, F5, F6].
 - Official examples show that Frigate can run with MQTT disabled. Thus, Home Assistant is not in the recording path [F7].
@@ -27,7 +38,7 @@ Home Assistant-triggered `camera.record` has useful lookback, but lookback needs
 
 Agent DVR is an alternative with local AI, alert-only recording, a pre-record buffer, and age-based storage cleanup. Its built-in local AI needs a license or active subscription, and its storage and detector behavior has more independent controls to coordinate than the Frigate policy [A1, A2, A3].
 
-No assessed architecture can guarantee deletion at the exact instant that a clip becomes 14 days old. Frigate's default cleanup interval permits normal deletion up to about one hour after the cutoff. Storage pressure can delete footage earlier. Treat "14 days" as a policy target: retain for at least 14 days during normal operation, then delete on the next cleanup pass. Provide enough storage so emergency cleanup does not violate the target [F1, F3, F6].
+No assessed architecture can guarantee deletion at the exact instant that a clip becomes 14 days old. Frigate's default cleanup interval permits normal deletion up to about one hour after the cutoff, storage pressure can delete footage earlier, and the 0.17.2 cleanup edge case can violate intended event retention. Treat "14 days" as an intended policy, not a proven minimum, until those failure semantics are resolved. Provide enough storage so emergency cleanup does not further reduce the target [F1, F3, F6].
 
 ## Fact and assessment method
 
@@ -41,15 +52,15 @@ The terms in this report have these meanings:
 
 ## Criteria matrix
 
-| Architecture | Fully local data path | Temporary pre-roll | Persists only person events | 14-day age policy | Independent of Home Assistant | Four-camera fit | Assessment |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Reolink camera to microSD | Yes for supported models | Yes on mains-powered PoE and plug-in WiFi models | Yes when the model exposes person-specific record schedules | No exact age control; overwrite is capacity-based | Yes | Good; work is distributed across cameras | Independent copy possible; not an age-policy store |
-| Reolink camera to local FTP | Yes when the FTP host is local | Supported, but Reolink says network quality can cause loss of pre-motion frames | Yes when the model exposes person-specific FTP schedules | Yes only with a separate FTP-host deletion job | Yes | Good; central FTP is simple at four cameras | Viable simple design after device test |
-| Home Assistant person event to `camera.record` | Yes when all components are local | Conditional; lookback needs an active HLS stream | Yes, by automation trigger | Separate file cleanup is required | No | Technically possible, but adds four always-active HLS buffers and automation coordination | Does not meet the HA-independence requirement |
-| Frigate detection and recording | Yes; MQTT and cloud services are optional | Yes; temporary segment cache plus 0-60 second configured pre-capture | Yes, with explicit person-only tracking, alert, detection, and retention controls | Native day setting; cleanup interval means not instant | Yes when run as its own Service with MQTT disabled | Strong; official planning class covers 1-6 low-activity cameras | Meets documented mechanics; selection is deferred |
-| Agent DVR local AI and alert recording | Yes for local streams and local AI | Yes; camera recording buffer is written when recording starts | Yes through local person AI, alert action, and Alert recording mode | Native maximum age in hours; cleanup timing and size limits apply | Yes | Credible; exact capacity must be measured on the selected model and hardware | Meets mechanics with license and load-test gates |
-| Scrypted NVR | Local recording and detection are possible | Continuous recording inherently contains pre-event video | No; official NVR design records 24/7 | Storage is primarily capacity-managed | Yes | Strong at four cameras, but needs at least 1 TB and continuous storage | Does not meet the event-only requirement |
-| go2rtc plus a custom event recorder | Local restream is possible | Not supplied by go2rtc as a supported recorder feature | Only through custom detector and recorder logic | Only through custom cleanup | Yes if custom services are independent | Possible, but creates unowned custom seams | Requires custom ownership of missing recorder functions |
+| Architecture | Fully local data path | Temporary pre-roll | Persists only person events | 14-day age policy | 200 GiB budget | Independent of Home Assistant | Four-camera fit | Assessment |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Reolink camera to microSD | Yes for supported models | Yes on mains-powered PoE and plug-in WiFi models | Yes when the model exposes person-specific record schedules | No exact age control; overwrite is capacity-based | Unresolved; capacity and daily growth must be measured | Yes | Good; work is distributed across cameras | Independent copy possible; not an age-policy store |
+| Reolink camera to local FTP | Yes when the FTP host is local | Supported, but Reolink says network quality can cause loss of pre-motion frames | Yes when the model exposes person-specific FTP schedules | Yes only with a separate FTP-host deletion job | Unresolved; daily growth and overflow policy are not selected | Yes | Good; central FTP is simple at four cameras | Candidate after device, capacity, and cleanup tests |
+| Home Assistant person event to `camera.record` | Yes when all components are local | Conditional; lookback needs an active HLS stream | Yes, by automation trigger | Separate file cleanup is required | Unresolved; no capacity control is defined | No | Technically possible, but adds four always-active HLS buffers and automation coordination | Does not meet the HA-independence requirement |
+| Frigate detection and recording | Yes; MQTT and cloud services are optional | Configurable 0-60 second pre-capture, with a known 0.17.2 cleanup edge case | Yes, with explicit person-only tracking, alert, detection, and retention controls | Native day setting, but strict 14-day event retention is unproven on 0.17.2 | Unresolved; measured growth must stay below 14.29 GiB/day or use an explicit overflow policy | Yes when run as its own Service with MQTT disabled | Strong; official planning class covers 1-6 low-activity cameras | Candidate only after retention defect and 200 GiB budget decisions |
+| Agent DVR local AI and alert recording | Yes for local streams and local AI | Yes; camera recording buffer is written when recording starts | Yes through local person AI, alert action, and Alert recording mode | Native maximum age in hours; cleanup timing and size limits apply | Unresolved; daily growth and size controls must be measured | Yes | Credible; exact capacity must be measured on the selected model and hardware | Candidate with license, capacity, and load-test gates |
+| Scrypted NVR | Local recording and detection are possible | Continuous recording inherently contains pre-event video | No; official NVR design records 24/7 | Storage is primarily capacity-managed | Fails the stated budget at its documented minimum 1 TB storage design | Yes | Strong at four cameras, but needs at least 1 TB and continuous storage | Does not meet the event-only or 200 GiB requirements |
+| go2rtc plus a custom event recorder | Local restream is possible | Not supplied by go2rtc as a supported recorder feature | Only through custom detector and recorder logic | Only through custom cleanup | Unresolved; custom capacity enforcement is required | Yes if custom services are independent | Possible, but creates unowned custom seams | Requires custom ownership of missing recorder functions |
 
 Matrix facts come from [R1-R6], [H1-H2], [F1-F10], [A1-A3], [S1-S2], and [G1-G2]. Assessment cells do not select an architecture.
 
@@ -200,7 +211,7 @@ Test the user-visible result, not only component health:
 
 ## Comparison summary
 
-Frigate is the only assessed architecture with direct primary-source support for all core mechanics: local stream ingestion, bounded temporary pre-capture, person-only alert retention, native retention days, and operation without Home Assistant. The person-only policy requires explicit tracking, review-label, and retention configuration; default alerts include cars [F1-F6].
+Frigate is the only assessed architecture with direct primary-source support for the core controls: local stream ingestion, bounded temporary pre-capture, person-only alert retention, native retention days, and operation without Home Assistant. It is not yet proven to satisfy the strict policy because of the 0.17.2 cleanup edge case and the unresolved 200 GiB capacity/overflow decision. The person-only configuration also requires explicit tracking, review-label, and retention settings; default alerts include cars [F1-F6].
 
 Reolink-to-FTP has lower system complexity, but the exact doorbell must prove reliable person filtering and FTP pre-roll. It needs server-side age cleanup because camera storage alone does not provide an exact 14-day rule.
 
@@ -208,7 +219,7 @@ Agent DVR has a documented local-AI path, but it has license and policy-control 
 
 ## Sources
 
-All sources were retrieved on 2026-08-23. Official documentation and official project source are primary sources. GitHub issue [G2] is maintainer-controlled upstream material but has lower authority than released documentation or source.
+Sources were retrieved on 2026-08-23 unless a source states 2026-08-27. Official documentation and official project source are primary sources. GitHub issue [G2] is maintainer-controlled upstream material but has lower authority than released documentation or source.
 
 ### Reolink
 
@@ -218,6 +229,8 @@ All sources were retrieved on 2026-08-23. Official documentation and official pr
 - **[R4]** Reolink, [Introduction to Reolink Video Doorbell Cameras](https://support.reolink.com/articles/16929500357657-Introduction-to-Reolink-Video-Doorbell-Cameras/).
 - **[R5]** Reolink, [Which Cameras/NVRs Support FTP Uploading](https://support.reolink.com/articles/900000625446-Which-Cameras-NVRs-Support-FTP-Uploading/).
 - **[R6]** Reolink, [Introduction to the Settings on Reolink Web Interface](https://support.reolink.com/articles/900000593263-Introduction-to-the-Settings-on-Reolink-Web-Interface/).
+- **[R7]** Reolink, [Which Reolink Products Support CGI/RTSP/ONVIF](https://support.reolink.com/articles/900000617826-Which-Reolink-Products-Support-CGI-RTSP-ONVIF/) and [FAQs for Reolink Video Doorbell (2nd Gen)](https://support.reolink.com/articles/60553722670617-FAQs-for-Reolink-Video-Doorbell-2nd-Gen/), accessed 2026-08-27.
+- **[R8]** Reolink, [Introduction to RTSP](https://support.reolink.com/articles/900000630706-Introduction-to-RTSP/), accessed 2026-08-27.
 
 ### Home Assistant
 

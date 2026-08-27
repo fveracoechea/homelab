@@ -2,15 +2,21 @@
 
 Research date: 2026-08-23
 
+Installed-camera update: 2026-08-27
+
 Issue: [#18](https://github.com/fveracoechea/homelab/issues/18)
 
-## Decision
+## Candidate boundary
 
-Use the official Reolink integration for camera administration, native Reolink
+If Frigate is selected as the recorder, use the official Reolink integration for camera administration, native Reolink
 AI state, and a secondary direct live view. Use Frigate as the independent NVR
 and the authority for recordings, object detection, review items, and event
 identifiers. Use Frigate `reviews` or `events`, not a Reolink person binary
 sensor, whenever an automation must open the recording for the detected person.
+
+This is the target boundary for a camera with supported continuous local interfaces. It is not currently implementable with the purchased Reolink Battery Video Doorbell (2nd Gen). Reolink currently requires a Home Hub for this model's Home Assistant, RTSP, and ONVIF paths; standalone support in Wired Power Mode is a future firmware feature. Home Hub/NVR RTSP preview for battery cameras ends after at most five minutes, so it is not a continuous Frigate source. Replace the camera with a compatible plug-in Wi-Fi or PoE model, or wait for released and verified firmware, before implementing this boundary [S16][S17][S18].
+
+This report does not select the recorder or authorize Service implementation. Camera disposition, recorder architecture, retention enforcement, security boundaries, and detector/runtime selection remain owned by the open decision tickets.
 
 Keep the two paths independent after the camera:
 
@@ -289,7 +295,7 @@ retention policy.
 
 ## Sources
 
-Primary product and project sources, accessed 2026-08-23:
+Primary product and project sources were accessed 2026-08-23 unless a source states 2026-08-27:
 
 - [S1] Home Assistant, [Reolink integration](https://www.home-assistant.io/integrations/reolink/), including prerequisites, push/poll behavior, streams, Media Browser, rich notifications, and codec limits.
 - [S2] Frigate, [Home Assistant integration](https://docs.frigate.video/integrations/home-assistant/), including MQTT requirement, entities, Media Browser, notification API, RTSP, and casting.
@@ -306,6 +312,9 @@ Primary product and project sources, accessed 2026-08-23:
 - [S13] Caddy, [`reverse_proxy`](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy), including WebSocket and forwarded-header behavior.
 - [S14] Frigate, [MQTT topics](https://docs.frigate.video/integrations/mqtt/), including availability, event IDs, review IDs, detection IDs, and clip state.
 - [S15] Frigate, [Home Assistant notifications](https://docs.frigate.video/guides/ha_notifications/).
+- [S16] Reolink, [Which Reolink Products Support CGI/RTSP/ONVIF](https://support.reolink.com/articles/900000617826-Which-Reolink-Products-Support-CGI-RTSP-ONVIF/), accessed 2026-08-27.
+- [S17] Reolink, [FAQs for Reolink Video Doorbell (2nd Gen)](https://support.reolink.com/articles/60553722670617-FAQs-for-Reolink-Video-Doorbell-2nd-Gen/) and [Power Modes](https://support.reolink.com/articles/56608051231129-Introduction-to-Power-Modes-of-Reolink-Battery-Video-Doorbells-Dual-Power-Support/), accessed 2026-08-27.
+- [S18] Reolink, [Introduction to RTSP](https://support.reolink.com/articles/900000630706-Introduction-to-RTSP/), accessed 2026-08-27.
 
 Nix facts were queried through nix-mcp against its live nixpkgs unstable index
 and the repository flake inputs on 2026-08-23:

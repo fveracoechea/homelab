@@ -2,6 +2,8 @@
 
 Research date: 2026-08-23
 
+Installed-camera update: 2026-08-27
+
 Issue: [#16](https://github.com/fveracoechea/homelab/issues/16)
 
 ## Decision
@@ -13,6 +15,16 @@ The always-on Reolink Video Doorbell PoE and Video Doorbell WiFi families are su
 This report covers the two always-on wired families that Reolink calls **Video Doorbell PoE** (`D340P`) and **Video Doorbell WiFi** (`D340W`), in black and white variants. The Wi-Fi model is wired for power but uses Wi-Fi or its 100 Mbps LAN port for data. The PoE model uses Ethernet for data and either PoE or separate 12-24 VAC / 24 VDC power. [S1][S2][S3]
 
 This report does not apply its conclusions to the Battery Doorbell families. The Battery Doorbell 2nd Gen can use wired power, but it is a different product family with different direct RTSP, ONVIF, and Home Assistant limits. [S1]
+
+## Installed-camera result
+
+The user identified the purchased unit as the **Reolink Battery Video Doorbell (2nd Gen)**. It is not one of the always-on `D340P` or `D340W` families assessed below, so the wired-family decision does not apply to this installation.
+
+Reolink currently requires a Home Hub for this battery doorbell's CGI, RTSP, ONVIF, and Home Assistant paths. Its model FAQ says standalone RTSP/ONVIF in Wired Power Mode is planned for a future firmware update. Reolink also documents an at-most-five-minute RTSP preview session for battery Wi-Fi cameras through a Home Hub or NVR, and currently does not allow a Home Hub-connected 2nd Gen doorbell to enter Wired Power Mode. Therefore neither the standalone camera nor a Home Hub provides a documented continuous Frigate stream today. [S13][S14][S15]
+
+If continuous local NVR integration is required while the return option remains open, use a plug-in Reolink Video Doorbell WiFi or PoE model with documented standalone protocols. Otherwise, wait for released firmware and verify the installed version before implementation.
+
+Record the return deadline, installed hardware number, firmware version, power mode, and local address before that decision. Do not buy a Home Hub solely for Frigate under the currently documented five-minute stream behavior.
 
 ## Family matrix
 
@@ -111,9 +123,9 @@ The following functions do not survive a complete Internet outage, or depend on 
 
 The official sources do not define all failure details. Verify timekeeping after a long WAN outage, queued/retried FTP or webhook behavior, recovery after link loss, and whether a Wi-Fi doorbell maintains local operation when its configured DNS or NTP servers are unavailable.
 
-## Required exact-model inventory
+## Replacement-camera inventory
 
-Collect these values from **Device Info** and the physical installation before implementation. Do not record passwords, UID values, Wi-Fi credentials, or webhook secrets in Git or GitHub.
+Collect these values from **Device Info** and the physical installation for any replacement wired model before implementation. The current battery model remains blocked as described above. Do not record passwords, UID values, Wi-Fi credentials, or webhook secrets in Git or GitHub.
 
 | Inventory item | Why it matters |
 |---|---|
@@ -143,7 +155,7 @@ These are research follow-ups, not implementation steps:
 
 ## Risks and open facts
 
-- **No exact unit inventory:** This is the main blocker to turning family claims into device facts.
+- **Incomplete installed-unit inventory:** The product family is known, but hardware number, firmware version, power mode, and return deadline are still required. Continuous local integration remains blocked regardless under the currently documented firmware behavior.
 - **Webhook is a test feature:** Reolink requires latest matching firmware, standalone mode, and specific hardware IDs. Event granularity and delivery guarantees are not fully documented. [S4]
 - **Marketing and formal specifications differ:** The Wi-Fi marketing section lists more AI classes than its formal specification table. The device capability response is the final authority. [S3]
 - **Connection limits:** Home Assistant warns that Reolink cameras have a limited number of simultaneous connections. Home Assistant, Frigate, Blue Iris, Scrypted, or a second ONVIF client can cause short unavailability. [S5]
@@ -151,7 +163,7 @@ These are research follow-ups, not implementation steps:
 
 ## Sources
 
-All sources were accessed on 2026-08-23. Reolink pages are first-party product or support documents. Home Assistant's official integration document is primary documentation for the integration; it states that the integration is officially authorized by Reolink and built with Reolink official resources.
+Sources were accessed on 2026-08-23 unless a source states 2026-08-27. Reolink pages are first-party product or support documents. Home Assistant's official integration document is primary documentation for the integration; it states that the integration is officially authorized by Reolink and built with Reolink official resources.
 
 - **[S1]** Reolink, [Introduction to Reolink Video Doorbell Cameras](https://support.reolink.com/articles/16929500357657-Introduction-to-Reolink-Video-Doorbell-Cameras/). Family boundaries, power, AI classes, recording destinations, package-detection variants, RTSP/ONVIF, direct Home Assistant, and cloud comparison.
 - **[S2]** Reolink, [Reolink Video Doorbell PoE product and specifications](https://reolink.com/product/reolink-video-doorbell-poe/). Stream codec, protocols, person/visitor detection, recording modes, storage, and power.
@@ -165,3 +177,6 @@ All sources were accessed on 2026-08-23. Reolink pages are first-party product o
 - **[S10]** Reolink, [Introduction to the Default User and Password](https://support.reolink.com/articles/900000603563-Introduction-to-the-Default-User-and-Password-of-Reolink-Cameras-NVRs/). Initial local admin credential setup.
 - **[S11]** Reolink, [How to Add Admin/User Accounts to Reolink Cameras](https://support.reolink.com/articles/360011355734-How-to-Add-Admin-User-Accounts-to-Reolink-Cameras/). Device-local account roles and permissions.
 - **[S12]** Reolink, [How to Enable UID for Reolink Products](https://support.reolink.com/articles/360013481134-How-to-Enable-UID-for-Reolink-Products/). Optional UID/P2P remote access, default state, random UDP use, and local-only disablement.
+- **[S13]** Reolink, [Which Reolink Products Support CGI/RTSP/ONVIF](https://support.reolink.com/articles/900000617826-Which-Reolink-Products-Support-CGI-RTSP-ONVIF/). Battery-camera protocol requirements. Accessed 2026-08-27.
+- **[S14]** Reolink, [FAQs for Reolink Video Doorbell (2nd Gen)](https://support.reolink.com/articles/60553722670617-FAQs-for-Reolink-Video-Doorbell-2nd-Gen/) and [Power Modes](https://support.reolink.com/articles/56608051231129-Introduction-to-Power-Modes-of-Reolink-Battery-Video-Doorbells-Dual-Power-Support/). Current Wired Power Mode, Home Hub, RTSP, ONVIF, and Home Assistant limits. Accessed 2026-08-27.
+- **[S15]** Reolink, [Introduction to RTSP](https://support.reolink.com/articles/900000630706-Introduction-to-RTSP/). Home Hub/NVR stream URLs and battery-camera preview-session limits. Accessed 2026-08-27.
