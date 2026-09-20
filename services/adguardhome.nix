@@ -35,6 +35,13 @@
         filtering_enabled = true;
         parental_enabled = false;
         safe_search.enabled = false;
+        rewrites = [
+          {
+            domain = "photos.veracoechea.com";
+            answer = "10.0.0.2";
+            enabled = true;
+          }
+        ];
       };
 
       filters =
