@@ -11,7 +11,6 @@
     ./networking.nix
 
     ../../services/caddy-vps.nix
-    ../../services/baby-shower.nix
     ../../services/headscale.nix
     ../../services/headplane.nix
     ../../services/tailscale-vps.nix
